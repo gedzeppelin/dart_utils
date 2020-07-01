@@ -1,7 +1,7 @@
 # Read about `build.yaml` at https://pub.dev/packages/build_config
 builders:
   pagination:
-    import: "package:pagination_generator/builder.dart"
+    import: "package:pagination_codegen/builder.dart"
     builder_factories: ["paginationBuilder"]
     build_extensions: {".dart": [".pagination.g.part"]}
     auto_apply: dependents

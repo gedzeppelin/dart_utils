@@ -1,4 +1,4 @@
-name: pagination_generator
+name: pagination_codegen
 description: An annotation processor for @Paginated annotations.
 version: 1.0.0
 author: Gedy Palomino <gedy.palomino@gmail.com>
