@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
-import 'package:pagination_generator/util.dart';
 import 'package:source_gen/source_gen.dart';
 
 import 'annotation.dart';
+import 'util.dart';
 
 class PaginationGenerator extends GeneratorForAnnotation<Paginated> {
   @override
