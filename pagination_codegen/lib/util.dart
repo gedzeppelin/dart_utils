@@ -7,7 +7,7 @@ TODO
 ''';
 
 String generateForNest(String inputClass, String paginatorClass) => '''
-class $paginatorClass {
+class $paginatorClass implements Paginated<$inputClass>  {
   const $paginatorClass(
     this.count,
     this.total,
@@ -37,6 +37,8 @@ class $paginatorClass {
   final int page;
   final int pageCount;
   final List<$inputClass> data;
+
+  List<$inputClass> get items => data;
 
   List<$inputClass> get subList =>
       data.length >= 5 ? data.sublist(0,4) : data;

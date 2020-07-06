@@ -134,6 +134,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.9.3"
+  pagination_annotation:
+    dependency: "direct main"
+    description:
+      path: "../pagination_annotation"
+      relative: true
+    source: path
+    version: "1.0.0"
   path:
     dependency: transitive
     description:
