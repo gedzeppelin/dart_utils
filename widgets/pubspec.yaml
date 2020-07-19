@@ -1,0 +1,35 @@
+name: enigma_widgets
+description: A collection of useful widgets and utilities.
+version: 1.0.0
+author: Gedy Palomino <gedy.palomino@gmail.com>
+
+environment:  
+  sdk: ">=2.7.0 <3.0.0" 
+
+dependencies:  
+  # Flutter SDK.
+  flutter:
+    sdk: flutter
+  
+  # Package dependencies.
+  flutter_spinkit:
+  http:
+  tuple:
+  
+  # Annotation for pagination.
+  pagination_annotation:
+    git:
+      url: https://github.com/gedzeppelin/dart_utils
+      path: pagination_annotation
+
+dev_dependencies:
+  # Flutter test SDK.
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+dependency_overrides:
+  pagination_annotation:
+    path: ../pagination_annotation

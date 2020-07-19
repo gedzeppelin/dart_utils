@@ -40,11 +40,16 @@ class $paginatorClass implements Paginated<$inputClass>  {
 
   List<$inputClass> get items => data;
 
-  List<$inputClass> get subList =>
-      data.length >= 5 ? data.sublist(0,4) : data;
-
   static $paginatorClass fromJson(Map<String, dynamic> json) {
     return $paginatorClass.withJson(json);
+  }
+
+  static List<$inputClass> listFromJson(Iterable json) {
+    return json
+        ?.map(
+          (item) => item == null ? null : $inputClass.fromJson(item),
+        )
+        ?.toList();
   }
 
   Map<String, dynamic> toJson() {
