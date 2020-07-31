@@ -1,4 +1,4 @@
-import 'package:enigma_flutter/src/buttons/flat_loader_button.dart';
+import 'package:enigma_dart/src/buttons/flat_loader_button.dart';
 import 'package:flutter/material.dart';
 
 class RetryWidget extends StatelessWidget {

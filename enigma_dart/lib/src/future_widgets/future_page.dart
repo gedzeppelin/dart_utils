@@ -1,5 +1,5 @@
-import 'package:enigma_flutter/response.dart';
-import 'package:enigma_flutter/src/helper_widgets/retry_widget.dart';
+import 'package:enigma_dart/response.dart';
+import 'package:enigma_dart/src/helper_widgets/retry_widget.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';

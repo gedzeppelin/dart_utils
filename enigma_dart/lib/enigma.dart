@@ -1,4 +1,4 @@
-library enigma_flutter;
+library enigma_dart;
 
 export 'src/util.dart';
 
