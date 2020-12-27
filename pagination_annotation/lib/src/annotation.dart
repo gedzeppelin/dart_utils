@@ -1,11 +1,13 @@
-enum PaginationType {
+enum Style {
   django,
   enigmapi,
   nest,
 }
 
-class Pagination {
-  const Pagination({this.type = PaginationType.enigmapi});
+class JsonPagination {
+  const JsonPagination({
+    this.styles = const <Style>[Style.enigmapi],
+  });
 
-  final PaginationType type;
+  final List<Style> styles;
 }

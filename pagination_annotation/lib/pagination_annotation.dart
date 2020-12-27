@@ -1,4 +1,4 @@
 library pagination_annotation;
 
-export 'src/annotation.dart';
-export 'src/interface.dart';
+export "src/annotation.dart";
+export "src/interface.dart";

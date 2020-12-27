@@ -1,19 +1,16 @@
-import 'package:enigma_dart/response.dart';
-import 'package:enigma_dart/src/helper_widgets/retry_widget.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 
-typedef ErrorBuilder<T extends Object> = Widget Function(BuildContext context, Future<Response<T>> Function() retry);
-typedef FutureCallback<T extends Object> = Future<Response<T>> Function();
-typedef FuturePageBuilder<T extends Object> = Widget Function(BuildContext context, T payload);
-typedef OnResolve<T extends Object> = void Function(T resolved);
+import "package:flutter/foundation.dart";
+import "package:flutter/material.dart";
+import "package:flutter_spinkit/flutter_spinkit.dart";
+
+import "package:enigma_dart/src/core/response.dart";
+import "util.dart";
 
 // ANCHOR FuturePage StatefulWidget.
 class FuturePage<T extends Object> extends StatefulWidget {
   FuturePage({
     Key key,
-    @required this.futureResponse,
+    @required this.futureCallback,
     @required this.appBar,
     @required this.builder,
     this.onResolve,
@@ -33,7 +30,7 @@ class FuturePage<T extends Object> extends StatefulWidget {
   }) : super(key: key);
 
   final AppBar appBar;
-  final FuturePageBuilder<T> builder;
+  final SuccessBuilder<T> builder;
   final Drawer drawer;
   final ErrorBuilder errorBuilder;
   final Color errorButtonTextColor;
@@ -42,7 +39,7 @@ class FuturePage<T extends Object> extends StatefulWidget {
 
   final double errorTextSize;
   // General parameters.
-  final FutureCallback<T> futureResponse;
+  final FutureCallback<T> futureCallback;
 
   final bool isRefreshable;
   final WidgetBuilder loaderBuilder;
@@ -67,42 +64,33 @@ class FuturePageState<T> extends State<FuturePage<T>> {
   void initState() {
     super.initState();
     // Fetch the future data on initiation.
-    _futureData = widget.futureResponse();
+    _futureData = widget.futureCallback();
+
     // On resolve method.
-    _futureData.then((Response<T> resolved) {
-      if (resolved is Successful<T> && widget.onResolve != null) widget.onResolve(resolved.payload);
-    });
+    _futureData.attachOnSuccess(widget.onResolve);
   }
 
   Future<Response<T>> refresh() {
     setState(() {
       _isAppBarLoaderVisible = true;
-      _futureData = widget.futureResponse();
+      _futureData = widget.futureCallback();
     });
+
     // On resolve method.
-    _futureData.then((Response<T> resolved) {
-      if (resolved is Successful<T> && widget.onResolve != null) widget.onResolve(resolved.payload);
-    }).whenComplete(() {
+    _futureData.attachOnSuccess(widget.onResolve);
+
+    _futureData.whenComplete(() {
       setState(() => _isAppBarLoaderVisible = false);
     });
-    return _futureData;
-  }
 
-  Future<void> _refresh() async {
-    setState(() {
-      _futureData = widget.futureResponse();
-    });
-    // On resolve method.
-    await _futureData.then((Response<T> resolved) {
-      if (resolved is Successful<T> && widget.onResolve != null) widget.onResolve(resolved.payload);
-    });
+    return _futureData;
   }
 
   @override
   Widget build(BuildContext context) {
     AppBar _appBar;
 
-    // AppBar's progress loader.
+    // AppBar"s progress loader.
     final _appBarLoader = Visibility(
       visible: _isAppBarLoaderVisible,
       child: SizedBox(
@@ -151,45 +139,48 @@ class FuturePageState<T> extends State<FuturePage<T>> {
           if (snapshot.hasData) {
             final response = snapshot.data;
 
-            if (response is Successful<T>) {
-              final child = widget.builder(context, response.payload);
-              return widget.isRefreshable
-                  ? RefreshIndicator(
-                      child: child,
-                      onRefresh: _refresh,
-                    )
-                  : child;
-            } else if (response is Failed<T>) {
-              return widget.errorBuilder != null
-                  ? widget.errorBuilder(context, refresh)
-                  : RetryWidget(
-                      exception: response.exception,
-                      onTap: (startLoading, stopLoading) {
-                        startLoading();
-                        refresh().whenComplete(() => stopLoading());
-                      },
-                    );
-            }
-          } else if (snapshot.hasError) {
-            final exception = snapshot.error as Exception;
-            return widget.errorBuilder != null
-                ? widget.errorBuilder(context, refresh)
-                : RetryWidget(
-                    exception: exception,
-                    onTap: (startLoading, stopLoading) {
-                      startLoading();
-                      refresh().whenComplete(() => stopLoading());
+            return response.fold(
+              (payload) {
+                final buildedChild = widget.builder(context, payload);
+
+                if (widget.isRefreshable) {
+                  return RefreshIndicator(
+                    child: buildedChild,
+                    onRefresh: () async {
+                      setState(() {
+                        _futureData = widget.futureCallback();
+                      });
+                      // On resolve method.
+                      _futureData.attachOnSuccess(widget.onResolve);
+
+                      await _futureData;
                     },
                   );
+                }
+
+                return buildedChild;
+              },
+              (err) {
+                final retryWidget = makeRetryWidget(refresh, response);
+                return widget.errorBuilder != null ? widget.errorBuilder(context, retryWidget, err) : retryWidget;
+              },
+            );
+          } else if (snapshot.hasError) {
+            final ErrInternal<T> err = Response<T>.err(snapshot.error);
+            final retryWidget = makeRetryWidget(refresh, err);
+
+            return widget.errorBuilder != null ? widget.errorBuilder(context, retryWidget, err) : retryWidget;
           }
 
           // By default show a progress bar.
-          return widget.loaderBuilder != null
-              ? widget.loaderBuilder(context)
-              : SpinKitCircle(
-                  color: widget.loaderColor,
-                  size: widget.loaderSize,
-                );
+          if (widget.loaderBuilder != null) {
+            return widget.loaderBuilder(context);
+          }
+
+          return SpinKitPulse(
+            color: widget.loaderColor,
+            size: widget.loaderSize,
+          );
         },
       ),
       drawer: widget.drawer,

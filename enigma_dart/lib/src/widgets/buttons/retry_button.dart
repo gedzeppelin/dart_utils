@@ -1,16 +1,18 @@
-import 'package:enigma_dart/src/buttons/flat_loader_button.dart';
-import 'package:flutter/material.dart';
+import "package:flutter/material.dart";
+
+import "flat_loader_button.dart";
+import "util.dart";
 
 class RetryWidget extends StatelessWidget {
   const RetryWidget({
     Key key,
     @required this.onTap,
-    this.errorWidget,
-    this.exception,
+    this.messageWidget,
+    this.message,
   }) : super(key: key);
 
-  final Widget errorWidget;
-  final Exception exception;
+  final Widget messageWidget;
+  final String message;
   final OnLoaderButtonPressed onTap;
 
   @override
@@ -28,20 +30,19 @@ class RetryWidget extends StatelessWidget {
               bottom: 4.0,
               left: 16.0,
             ),
-            child: errorWidget ??
+            child: messageWidget ??
                 Text(
-                  exception == null ? 'Ocurrió un error al procesar su operación' : exception.toString(),
+                  message == null ? "Ocurrió un error al procesar su operación" : message,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16.0),
                 ),
           ),
           FlatLoaderButton(
             child: Text(
-              'REINTENTAR',
+              "REINTENTAR",
               style: TextStyle(fontSize: 16.0),
             ),
             onTap: onTap,
-            isAsync: false,
             margin: const EdgeInsets.only(
               top: 4.0,
               right: 16.0,

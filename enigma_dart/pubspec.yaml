@@ -1,6 +1,6 @@
 name: enigma_dart
 description: A collection of useful widgets and utilities.
-version: 1.0.0
+version: 0.1.0
 author: Gedy Palomino <gedy.palomino@gmail.com>
 
 environment:  
@@ -12,9 +12,9 @@ dependencies:
     sdk: flutter
   
   # Package dependencies.
-  flutter_spinkit:
-  http:
-  tuple:
+  dartz: ">=0.9.2 <1.0.0"
+  flutter_spinkit: ">=4.1.2+1 <5.0.0"
+  http: ">=0.12.2 <1.0.0"
   
   # Annotation for pagination.
   pagination_annotation:
