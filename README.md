@@ -1,10 +1,10 @@
 # Dart utils
 
- A collection of dart/ flutter util libraries.
+ A collection of dart/flutter util libraries and widgets.
 
 ## Commit convention
 
-Commit messages __MUST__ use [Conventional Commits](https://www.conventionalcommits.org/en/) format. It provides guidelines to create a better commit history log, making easier to have automated tasks around it (e.g. automated changelogs). Commits would follow the format `<type>[(optional scope)]: <description>`, where `<type>` might be `feat`/`fix`/`docs` etc. and breaking changes are indicated on the beginning of the optional body or footer section. 
+Commit messages __MUST__ use [Conventional Commits](https://www.conventionalcommits.org/en/) format. It provides guidelines to create a better commit history log, making easier to have automated tasks around it (e.g. automated changelogs). Commits would follow the format `<type>[(optional scope)]: <description>`, where `<type>` might be `feat`/`fix`/`docs` etc. Breaking changes are indicated on the beginning of the optional body or footer section. 
 
 Example:
 ```
