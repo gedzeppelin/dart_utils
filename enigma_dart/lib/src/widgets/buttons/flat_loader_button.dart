@@ -45,6 +45,8 @@ class FlatLoaderButtonState extends State<FlatLoaderButton> {
 
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     final child = Visibility(
       visible: !_isLoading,
       child: FlatButton(
@@ -54,7 +56,7 @@ class FlatLoaderButtonState extends State<FlatLoaderButton> {
       ),
       replacement: SpinKitWave(
         size: widget.loaderSize,
-        color: widget.loaderColor ?? Colors.white,
+        color: widget.loaderColor ?? isLight ? Colors.black : Colors.white,
       ),
     );
 

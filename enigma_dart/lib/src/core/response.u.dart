@@ -1,6 +1,6 @@
 part of 'response.dart';
 
-Future<Either<http.Response, IList<ErrInternal<T>>>> _makeAttempts<T>(
+Future<Either<http.Response, ErrMultiple<T>>> _makeAttempts<T>(
   Future<http.Response> httpRequest,
   int attempts,
 ) async {
@@ -16,7 +16,9 @@ Future<Either<http.Response, IList<ErrInternal<T>>>> _makeAttempts<T>(
     }
   }
 
-  return Right(IList.from(errors));
+  return Right(
+    ErrMultiple<T>(IList.from(errors)),
+  );
 }
 
 // ANCHOR Request helpers.
@@ -36,15 +38,15 @@ Future<Response<T>> makeRequest<T extends Object>({
 
         if (response.isSuccessful) {
           final payload = deserializer(decodedBody);
-          return Response.ok(payload);
+          return Ok<T>(payload);
         }
 
-        return Response.errExternal(response);
+        return ErrExternal<T>(response);
       } catch (e, s) {
-        return Response.err(e, s);
+        return ErrInternal<T>(e, s);
       }
     },
-    (errors) => Response.errMultiple(errors),
+    (err) => err,
   );
 }
 
@@ -64,26 +66,26 @@ Future<Response<P>> makePaginatedRequest<P extends Paginated>({
 
         if (response.isSuccessful) {
           final payload = deserializer(decodedBody);
-          return Response.ok(payload);
+          return Ok<P>(payload);
         }
 
-        return Response.errExternal(response);
+        return ErrExternal<P>(response);
       } catch (e, s) {
-        return Response.err(e, s);
+        return ErrInternal<P>(e, s);
       }
     },
-    (errors) => Response.errMultiple(errors),
+    (err) => err,
   );
 }
 
 /// Builds a [Response] with HTTP"s response status code comparison.
-Future<Response<List<T>>> makeListRequest<T>({
+Future<Response<L>> makeListRequest<T, L extends List<T>>({
   @required Future<http.Response> httpRequest,
   @required Deserializer<T> deserializer,
   int attempts = Response.defaultAttempts,
 }) async {
   try {
-    final result = await _makeAttempts(httpRequest, attempts);
+    final result = await _makeAttempts<L>(httpRequest, attempts);
 
     return result.fold(
       (response) {
@@ -97,23 +99,26 @@ Future<Response<List<T>>> makeListRequest<T>({
                   (item) => item == null ? null : deserializer(item),
                 )
                 ?.toList();
-            return Response.ok(payload);
+            return Ok<L>(payload);
           }
 
-          return Response.errExternal(response);
+          return ErrExternal<L>(response);
         } catch (e, s) {
-          return Response.err(e, s);
+          return ErrInternal<L>(e, s);
         }
       },
-      (errors) => Response.errMultiple(errors),
+      (err) => err,
     );
   } on Exception catch (e, s) {
-    return Response.err(e, s);
+    return ErrInternal<L>(e, s);
   }
 }
 
 ///
-Future<bool> checkRequestSuccess(Future<http.Response> httpRequest, {int attempts = Response.defaultAttempts}) async {
+Future<bool> checkRequestSuccess(
+  Future<http.Response> httpRequest, {
+  int attempts = Response.defaultAttempts,
+}) async {
   final result = await _makeAttempts(httpRequest, attempts);
   return result.fold((r) => r.isSuccessful, (_) => false);
 }
@@ -134,9 +139,7 @@ Future<Response<Tuple2<T, S>>> waitResponses2<T, S>(
           response0.payload,
           response1.payload,
         ))
-      : Response.errMultiple(
-          IList.from(responses.whereType<Err>()),
-        );
+      : Response.errMultiple(IList.from(responses.whereType<Err>()), 2);
 }
 
 Future<Response<Tuple3<T, S, U>>> waitResponses3<T, S, U>(
@@ -156,9 +159,7 @@ Future<Response<Tuple3<T, S, U>>> waitResponses3<T, S, U>(
           response1.payload,
           response2.payload,
         ))
-      : Response.errMultiple(
-          IList.from(responses.whereType<Err>()),
-        );
+      : Response.errMultiple(IList.from(responses.whereType<Err>()), 3);
 }
 
 Future<Response<Tuple4<T, S, U, V>>> waitResponses4<T, S, U, V>(
@@ -181,9 +182,7 @@ Future<Response<Tuple4<T, S, U, V>>> waitResponses4<T, S, U, V>(
           response2.payload,
           response3.payload,
         ))
-      : Response.errMultiple(
-          IList.from(responses.whereType<Err>()),
-        );
+      : Response.errMultiple(IList.from(responses.whereType<Err>()), 4);
 }
 
 Future<Response<Tuple5<T, S, U, V, W>>> waitResponses5<T, S, U, V, W>(
@@ -199,7 +198,7 @@ Future<Response<Tuple5<T, S, U, V, W>>> waitResponses5<T, S, U, V, W>(
   final response1 = responses[1] as Response<S>;
   final response2 = responses[2] as Response<U>;
   final response3 = responses[3] as Response<V>;
-  final response4 = responses[3] as Response<W>;
+  final response4 = responses[4] as Response<W>;
 
   return response0 is Ok<T> && response1 is Ok<S> && response2 is Ok<U> && response3 is Ok<V> && response4 is Ok<W>
       ? Response.ok(Tuple5(
@@ -209,7 +208,22 @@ Future<Response<Tuple5<T, S, U, V, W>>> waitResponses5<T, S, U, V, W>(
           response3.payload,
           response4.payload,
         ))
-      : Response.errMultiple(
-          IList.from(responses.whereType<Err>()),
-        );
+      : Response.errMultiple(IList.from(responses.whereType<Err>()), 5);
+}
+
+Future<Response<List<T>>> waitAll<T>(List<Future<Response<T>>> futures) async {
+  final responses = await Future.wait(futures);
+  final result = List<T>();
+
+  for (final item in responses) {
+    if (item is Err<T>) {
+      return item.toType();
+    }
+
+    if (item is Ok<T>) {
+      result.add(item.payload);
+    }
+  }
+
+  return Ok(result);
 }

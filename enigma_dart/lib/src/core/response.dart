@@ -1,6 +1,7 @@
 import "dart:convert" show json;
 
 import "package:dartz/dartz.dart";
+import 'package:enigma_dart/enigma.dart';
 import "package:flutter/material.dart";
 import "package:http/http.dart" as http show Response, StreamedResponse;
 import "package:pagination_annotation/pagination_annotation.dart";
@@ -12,7 +13,7 @@ part "response.u.dart";
 typedef Deserializer<T> = T Function(Map<String, dynamic> decodedBody);
 
 typedef IfOk<T, A> = A Function(T payload);
-typedef IfErr<T, A> = A Function(Err<dynamic> err);
+typedef IfErr<T, A> = A Function(Err<T> err);
 typedef Condition<T> = bool Function(T payload);
 
 // ANCHOR Exception messages and extensions.
@@ -33,9 +34,9 @@ abstract class Response<T> {
   const Response._internal();
 
   factory Response.ok(T payload) = Ok<T>;
-  factory Response.err(Object error, [StackTrace stackTrace]) = ErrInternal;
-  factory Response.errExternal(http.Response response) = ErrExternal;
-  factory Response.errMultiple(IList<Err<dynamic>> exception) = ErrMultiple;
+  factory Response.err(Object error, [StackTrace stackTrace]) = ErrInternal<T>;
+  factory Response.errExternal(http.Response response) = ErrExternal<T>;
+  factory Response.errMultiple(IList<Err> errors, [int requestCount]) = ErrMultiple<T>;
 
   bool get isSuccessful => this is Ok<T>;
 
@@ -43,7 +44,7 @@ abstract class Response<T> {
 
   Response<A> map<A>(IfOk<T, A> mapOk) => fold((p) => Ok<A>(mapOk(p)), (e) => e.toType<A>());
   A mapOr<A>(A def, IfOk<T, A> mapOk) => fold((p) => mapOk(p), (e) => def);
-  A mapOrElse<A>(IfErr<T, A> mapErr, IfOk<T, A> mapOk) => fold((p) => mapOk(p), (e) => mapErr(e.toType<A>()));
+  A mapOrElse<A>(IfErr<T, A> mapErr, IfOk<T, A> mapOk) => fold((p) => mapOk(p), (e) => mapErr(e));
 }
 
 // ANCHOR Ok variant.
@@ -65,7 +66,7 @@ abstract class Err<T> extends Response<T> {
   Err<A> toType<A>();
 
   @override
-  A fold<A>(IfOk<T, A> ifOk, IfErr<T, A> ifErr) => ifErr(this.toType());
+  A fold<A>(IfOk<T, A> ifOk, IfErr<T, A> ifErr) => ifErr(this);
 }
 
 class ErrInternal<T> extends Err<T> {
@@ -78,7 +79,7 @@ class ErrInternal<T> extends Err<T> {
   String toString() => stackTrace?.toString() ?? error.toString();
 
   @override
-  ErrInternal<A> toType<A>() => this as ErrInternal<A>;
+  ErrInternal<A> toType<A>() => ErrInternal<A>(error, stackTrace);
 }
 
 class ErrExternal<T> extends Err<T> {
@@ -92,17 +93,23 @@ class ErrExternal<T> extends Err<T> {
   String toString() => "Request status code: ${response.statusCode}";
 
   @override
-  ErrExternal<A> toType<A>() => this as ErrExternal<A>;
+  ErrExternal<A> toType<A>() => ErrExternal<A>(response);
 }
 
 class ErrMultiple<T> extends Err<T> {
-  const ErrMultiple(this.errors) : super._internal();
+  const ErrMultiple(this.errors, [this.requestCount]) : super._internal();
 
-  final IList<Err<dynamic>> errors;
-
-  @override
-  String toString() => errors.mapWithIndex((e, i) => "$i: ${e.toString()}").toIterable().join("\n");
+  final IList<Err> errors;
+  final int requestCount;
 
   @override
-  ErrMultiple<A> toType<A>() => this as ErrMultiple<A>;
+  String toString() => requestCount != null
+      ? "There have been ${errors.length()} errors of the $requestCount HTTP requests:\n$_runtimeErrors"
+      : "${errors.length()} errors have been occurred";
+  //String toString() => errors.mapWithIndex((e, i) => "$i: ${e.toString()}").toIterable().join("\n");
+
+  String get _runtimeErrors => errors.mapWithIndex((i, e) => "$i: ${e.runtimeType.toString()}").toList().join("\n");
+
+  @override
+  ErrMultiple<A> toType<A>() => ErrMultiple<A>(errors);
 }
