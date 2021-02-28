@@ -1,7 +1,7 @@
 import "package:flutter/material.dart";
 import "package:flutter_spinkit/flutter_spinkit.dart";
 
-import "util.dart";
+import "common.dart";
 
 class FlatLoaderButton extends StatefulWidget {
   const FlatLoaderButton({
@@ -9,7 +9,7 @@ class FlatLoaderButton extends StatefulWidget {
     @required this.child,
     @required this.onTap,
     this.margin,
-    this.width = 250.0,
+    this.width,
     this.height = 50.0,
     this.color,
     // Loader.
@@ -36,11 +36,22 @@ class FlatLoaderButtonState extends State<FlatLoaderButton> {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  void startLoading() => setState(() => _isLoading = true);
-  void stopLoading() => setState(() => _isLoading = false);
+  void startLoading() {
+    setState(() {
+      _isLoading = true;
+    });
+  }
+
+  void stopLoading() {
+    setState(() {
+      _isLoading = false;
+    });
+  }
 
   void onPressed() {
-    if (!_isLoading) widget.onTap(startLoading, stopLoading);
+    if (!_isLoading) {
+      widget.onTap(startLoading, stopLoading);
+    }
   }
 
   @override

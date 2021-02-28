@@ -29,14 +29,25 @@ String makePaginatorClass(Style style, String inputClass, String paginatorClass)
 String makePaginatorDjango(String inputClass, String paginatorClass) => """
 class $paginatorClass extends Paginated<$inputClass>  {
   const $paginatorClass(
-    List<$inputClass> results,
     int count,
-    String previous,
-    String next,
-  ) : super(results, count, previous, next);
+    this.next,
+    this.previous,
+    List<$inputClass> results,
+  ) : super(results, count);
+
+  final String next;
+  final String previous;
+
+  @override
+  bool get haveNext => next != null;
+  @override
+  bool get havePrevious => previous != null;
 
   factory $paginatorClass.fromJson(Map<String, dynamic> json) {
     return $paginatorClass(
+      json["count"] as int,
+      json["next"] as String,
+      json["previous"] as String,
       (json["results"] as List)
           ?.map(
             (item) => item == null 
@@ -44,17 +55,14 @@ class $paginatorClass extends Paginated<$inputClass>  {
                 : $inputClass.fromJson(item as Map<String, dynamic>),
           )
           ?.toList(),
-      json["count"] as int,
-      json["previous"] as String,
-      json["next"] as String,
     );
   }
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       "count": this.totalCount,
-      "next": this.nextUrl,
-      "previous": this.previousUrl,
+      "next": this.next,
+      "previous": this.previous,
       "results": this.results?.map((e) => e?.toJson())?.toList(),
     }; 
   }
@@ -69,32 +77,22 @@ String makePaginatorNest(String inputClass, String paginatorClass) => """
 class $paginatorClass extends Paginated<$inputClass>  {
   const $paginatorClass(
     List<$inputClass> data,
-    int total,
-    String previousUrl,
-    String nextUrl,
     this.count,
+    int total,
     this.page,
     this.pageCount,
-  ) : super(data, total, previousUrl, nextUrl);
+  ) : super(data, total);
+
+  final int count;
+  final int page;
+  final int pageCount;
+
+  @override
+  bool get haveNext => page < pageCount;
+  @override
+  bool get havePrevious => page > 1;
 
   factory $paginatorClass.fromJson(Map<String, dynamic> json) {
-    final currentUrl = json[injectedUrlKey] as String;
-
-    final page0 = json["page"] as int;
-    final pageCount0 = json["pageCount"] as int;
-
-    String previousUrl;
-    String nextUrl;
-
-    if (currentUrl != null && page0 != null && pageCount0 != null) {
-      if (page0 > 1) {
-        previousUrl = makeUrl(url: currentUrl, page: page0 - 1);
-      }
-      if (page0 < pageCount0) {
-        nextUrl = makeUrl(url: currentUrl, page: page0 + 1);
-      }
-    }
-
     return $paginatorClass(
       (json["data"] as List)
           ?.map(
@@ -103,26 +101,20 @@ class $paginatorClass extends Paginated<$inputClass>  {
                 : $inputClass.fromJson(item as Map<String, dynamic>),
           )
           ?.toList(),
-      json["total"] as int,
-      previousUrl,
-      nextUrl,
       json["count"] as int,
-      page0,
-      pageCount0,
+      json["total"] as int,
+      json["page"] as int,
+      json["pageCount"] as int,
     );
   }
-
-  final int count;
-  final int page;
-  final int pageCount;
-
+  
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
+      "data": this.results?.map((e) => e?.toJson())?.toList(),
       "count": this.count,
       "total": this.totalCount,
       "page": this.page,
       "pageCount": this.pageCount,
-      "data": this.results?.map((e) => e?.toJson())?.toList(),
     }; 
   }
 }

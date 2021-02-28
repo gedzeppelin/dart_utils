@@ -14,7 +14,7 @@ typedef ErrorBuilder<T, P extends Paginated<T>> = Widget Function(Err<P> error, 
 
 enum PaginationViewType { listView, gridView }
 
-class PaginationView<T extends Object, P extends Paginated<T>> extends StatefulWidget {
+class PaginationView<T, P extends Paginated<T>> extends StatefulWidget {
   const PaginationView({
     Key key,
     @required this.itemBuilder,
@@ -214,12 +214,14 @@ class PaginationViewState<T, P extends Paginated<T>> extends State<PaginationVie
   }
 
   Future<void> refresh() async {
+    setState(() {
+      _currentResponse = null;
+    });
+
     final response = await widget.pageFetch(1);
     setState(() {
       _currentResponse = response;
     });
-
-    //await Future.delayed(Duration(seconds: 2));
 
     if (response is Ok<P>) {
       _nextPage = 2;

@@ -1,4 +1,3 @@
-
 import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:flutter_spinkit/flutter_spinkit.dart";
@@ -26,7 +25,7 @@ class FuturePage<T extends Object> extends StatefulWidget {
     // Loader.
     this.loaderBuilder,
     this.loaderColor = Colors.blue,
-    this.loaderSize = 50.0,
+    this.loaderSize = 35.0,
   }) : super(key: key);
 
   final AppBar appBar;
@@ -162,14 +161,14 @@ class FuturePageState<T> extends State<FuturePage<T>> {
               },
               (err) {
                 final retryWidget = makeRetryWidget(refresh, response);
-                return widget.errorBuilder != null ? widget.errorBuilder(context, retryWidget, err) : retryWidget;
+                return widget.errorBuilder != null ? widget.errorBuilder(context, refresh, err) : retryWidget;
               },
             );
           } else if (snapshot.hasError) {
             final ErrInternal<T> err = Response<T>.err(snapshot.error);
             final retryWidget = makeRetryWidget(refresh, err);
 
-            return widget.errorBuilder != null ? widget.errorBuilder(context, retryWidget, err) : retryWidget;
+            return widget.errorBuilder != null ? widget.errorBuilder(context, refresh, err) : retryWidget;
           }
 
           // By default show a progress bar.
@@ -177,7 +176,8 @@ class FuturePageState<T> extends State<FuturePage<T>> {
             return widget.loaderBuilder(context);
           }
 
-          return SpinKitPulse(
+          return SpinKitRing(
+            lineWidth: 2.0,
             color: widget.loaderColor,
             size: widget.loaderSize,
           );

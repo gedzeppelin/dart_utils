@@ -1,7 +1,7 @@
 import "package:flutter/material.dart";
 import "package:flutter_spinkit/flutter_spinkit.dart";
 
-import "util.dart";
+import "common.dart";
 
 class RaisedLoaderButton extends StatefulWidget {
   const RaisedLoaderButton({
@@ -52,11 +52,22 @@ class RaisedLoaderButtonState extends State<RaisedLoaderButton> {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  void startLoading() => setState(() => _isLoading = true);
-  void stopLoading() => setState(() => _isLoading = false);
+  void startLoading() {
+    setState(() {
+      _isLoading = true;
+    });
+  }
+
+  void stopLoading() {
+    setState(() {
+      _isLoading = false;
+    });
+  }
 
   void onPressed() {
-    if (!_isLoading) widget.onTap(startLoading, stopLoading);
+    if (!_isLoading) {
+      widget.onTap(startLoading, stopLoading);
+    }
   }
 
   @override

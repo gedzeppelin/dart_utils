@@ -8,13 +8,13 @@ typedef OnResolve<T> = void Function(T resolved);
 typedef SuccessBuilder<T> = Widget Function(BuildContext context, T payload);
 typedef ErrorBuilder<T> = Widget Function(
   BuildContext context,
-  RetryWidget retryWidget,
+  Future<Response<T>> Function() refresh,
   Err<T> failedResponse,
 );
 
 RetryWidget makeRetryWidget<T>(FutureCallback<T> retry, Err<T> failed) {
   return RetryWidget(
-    message: failed.toString(),
+    err: failed,
     onTap: (startLoading, stopLoading) {
       startLoading();
       retry().whenComplete(() => stopLoading());

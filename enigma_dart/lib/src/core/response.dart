@@ -1,12 +1,11 @@
-import "dart:convert" show json;
+import "dart:convert" show json, utf8;
 
 import "package:dartz/dartz.dart";
-import 'package:enigma_dart/enigma.dart';
 import "package:flutter/material.dart";
 import "package:http/http.dart" as http show Response, StreamedResponse;
 import "package:pagination_annotation/pagination_annotation.dart";
 
-part "response.u.dart";
+part "response_ext.dart";
 
 // ANCHOR Type definitions.
 
@@ -36,7 +35,7 @@ abstract class Response<T> {
   factory Response.ok(T payload) = Ok<T>;
   factory Response.err(Object error, [StackTrace stackTrace]) = ErrInternal<T>;
   factory Response.errExternal(http.Response response) = ErrExternal<T>;
-  factory Response.errMultiple(IList<Err> errors, [int requestCount]) = ErrMultiple<T>;
+  factory Response.errMultiple(List<Err> errors, [int requestCount]) = ErrMultiple<T>;
 
   bool get isSuccessful => this is Ok<T>;
 
@@ -60,7 +59,7 @@ class Ok<T> extends Response<T> {
 
 // ANCHOR Err variants.
 
-abstract class Err<T> extends Response<T> {
+abstract class Err<T> extends Response<T> implements Exception {
   const Err._internal() : super._internal();
 
   Err<A> toType<A>();
@@ -76,7 +75,7 @@ class ErrInternal<T> extends Err<T> {
   final StackTrace stackTrace;
 
   @override
-  String toString() => stackTrace?.toString() ?? error.toString();
+  String toString() => error.toString();
 
   @override
   ErrInternal<A> toType<A>() => ErrInternal<A>(error, stackTrace);
@@ -87,10 +86,24 @@ class ErrExternal<T> extends Err<T> {
 
   final http.Response response;
 
-  String get rawBody => response.body;
+  String get rawBody => utf8.decode(response.bodyBytes);
+  dynamic get body => json.decode(rawBody);
 
   @override
-  String toString() => "Request status code: ${response.statusCode}";
+  String toString() {
+    final _rawBody = rawBody;
+
+    if (_rawBody != null) {
+      final _body = body;
+      if (_body != null && _body is Map<String, dynamic> && _body.containsKey("message")) {
+        return _body["message"];
+      }
+
+      return _rawBody;
+    }
+
+    return "URL: ${response.request.url}\nStatus code: ${response.statusCode}";
+  }
 
   @override
   ErrExternal<A> toType<A>() => ErrExternal<A>(response);
@@ -99,17 +112,28 @@ class ErrExternal<T> extends Err<T> {
 class ErrMultiple<T> extends Err<T> {
   const ErrMultiple(this.errors, [this.requestCount]) : super._internal();
 
-  final IList<Err> errors;
+  final List<Err> errors;
   final int requestCount;
 
   @override
-  String toString() => requestCount != null
-      ? "There have been ${errors.length()} errors of the $requestCount HTTP requests:\n$_runtimeErrors"
-      : "${errors.length()} errors have been occurred";
-  //String toString() => errors.mapWithIndex((e, i) => "$i: ${e.toString()}").toIterable().join("\n");
+  String toString() {
+    final internal = errors.whereType<ErrInternal>();
+    if (internal.length > 0) {
+      return internal.first.toString();
+    }
 
-  String get _runtimeErrors => errors.mapWithIndex((i, e) => "$i: ${e.runtimeType.toString()}").toList().join("\n");
+    final external = errors.whereType<ErrExternal>();
+    if (external.length > 0) {
+      return external.first.toString();
+    }
+
+    return requestCount != null
+        ? "There have been ${errors.length} errors of the $requestCount HTTP requests:\n\n$_runtimeErrors"
+        : "${errors.length} errors have been occurred:\n----\n$_runtimeErrors\n";
+  }
+
+  String get _runtimeErrors => errors.asMap().entries.map((e) => "${e.key} [${e.runtimeType}]:\n${e.value}").join("\n");
 
   @override
-  ErrMultiple<A> toType<A>() => ErrMultiple<A>(errors);
+  ErrMultiple<A> toType<A>() => ErrMultiple<A>(errors, requestCount);
 }

@@ -17,7 +17,7 @@ Future<Either<http.Response, ErrMultiple<T>>> _makeAttempts<T>(
   }
 
   return Right(
-    ErrMultiple<T>(IList.from(errors)),
+    ErrMultiple<T>(errors),
   );
 }
 
@@ -34,7 +34,8 @@ Future<Response<T>> makeRequest<T extends Object>({
   return result.fold(
     (response) {
       try {
-        final decodedBody = json.decode(response.body) as Map<String, dynamic>;
+        final body = utf8.decode(response.bodyBytes);
+        final decodedBody = json.decode(body) as Map<String, dynamic>;
 
         if (response.isSuccessful) {
           final payload = deserializer(decodedBody);
@@ -61,8 +62,8 @@ Future<Response<P>> makePaginatedRequest<P extends Paginated>({
   return result.fold(
     (response) {
       try {
-        final decodedBody = json.decode(response.body) as Map<String, dynamic>;
-        //decodedBody[injectedUrlKey] = response.request.url.toString();
+        final body = utf8.decode(response.bodyBytes);
+        final decodedBody = json.decode(body) as Map<String, dynamic>;
 
         if (response.isSuccessful) {
           final payload = deserializer(decodedBody);
@@ -90,8 +91,8 @@ Future<Response<L>> makeListRequest<T, L extends List<T>>({
     return result.fold(
       (response) {
         try {
-          final decodedBody = json.decode(response.body) as Iterable<dynamic>;
-          //decodedBody[injectedUrlKey] = response.request.url.toString();
+          final body = utf8.decode(response.bodyBytes);
+          final decodedBody = json.decode(body) as Iterable<dynamic>;
 
           if (response.isSuccessful) {
             final payload = decodedBody
@@ -139,7 +140,7 @@ Future<Response<Tuple2<T, S>>> waitResponses2<T, S>(
           response0.payload,
           response1.payload,
         ))
-      : Response.errMultiple(IList.from(responses.whereType<Err>()), 2);
+      : Response.errMultiple(responses.whereType<Err>(), 2);
 }
 
 Future<Response<Tuple3<T, S, U>>> waitResponses3<T, S, U>(
@@ -159,7 +160,7 @@ Future<Response<Tuple3<T, S, U>>> waitResponses3<T, S, U>(
           response1.payload,
           response2.payload,
         ))
-      : Response.errMultiple(IList.from(responses.whereType<Err>()), 3);
+      : Response.errMultiple(responses.whereType<Err>(), 3);
 }
 
 Future<Response<Tuple4<T, S, U, V>>> waitResponses4<T, S, U, V>(
@@ -182,7 +183,7 @@ Future<Response<Tuple4<T, S, U, V>>> waitResponses4<T, S, U, V>(
           response2.payload,
           response3.payload,
         ))
-      : Response.errMultiple(IList.from(responses.whereType<Err>()), 4);
+      : Response.errMultiple(responses.whereType<Err>(), 4);
 }
 
 Future<Response<Tuple5<T, S, U, V, W>>> waitResponses5<T, S, U, V, W>(
@@ -208,7 +209,7 @@ Future<Response<Tuple5<T, S, U, V, W>>> waitResponses5<T, S, U, V, W>(
           response3.payload,
           response4.payload,
         ))
-      : Response.errMultiple(IList.from(responses.whereType<Err>()), 5);
+      : Response.errMultiple(responses.whereType<Err>(), 5);
 }
 
 Future<Response<List<T>>> waitAll<T>(List<Future<Response<T>>> futures) async {

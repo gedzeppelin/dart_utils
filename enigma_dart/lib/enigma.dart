@@ -12,6 +12,8 @@ export "src/util.dart";
 
 export "src/widgets/buttons/flat_loader_button.dart";
 export "src/widgets/buttons/raised_loader_button.dart";
+export "src/widgets/buttons/icon_loader_button.dart";
+export "src/widgets/buttons/common.dart";
 
 export "src/widgets/cards/modern_card.dart";
 

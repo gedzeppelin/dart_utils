@@ -16,8 +16,8 @@ class FutureSection<T> extends StatefulWidget {
     this.errorBuilder,
     this.loaderBuilder,
     this.loaderColor = Colors.blue,
-    this.loaderPadding = const EdgeInsets.all(8.0),
-    this.loaderSize = 30.0,
+    this.loaderPadding = const EdgeInsets.all(16.0),
+    this.loaderSize = 25.0,
     this.onResolve,
   }) : super(key: key);
 
@@ -68,14 +68,14 @@ class FutureSectionState<T> extends State<FutureSection<T>> {
             (payload) => widget.builder(context, payload),
             (err) {
               final retryWidget = makeRetryWidget(refresh, err);
-              return widget.errorBuilder != null ? widget.errorBuilder(context, retryWidget, err) : retryWidget;
+              return widget.errorBuilder != null ? widget.errorBuilder(context, refresh, err) : retryWidget;
             },
           );
         } else if (snapshot.hasError) {
           final ErrInternal<T> err = Response.err(snapshot.error);
           final retryWidget = makeRetryWidget(refresh, err);
 
-          return widget.errorBuilder != null ? widget.errorBuilder(context, retryWidget, err) : retryWidget;
+          return widget.errorBuilder != null ? widget.errorBuilder(context, refresh, err) : retryWidget;
         }
 
         // By default show a progress bar.
@@ -83,9 +83,13 @@ class FutureSectionState<T> extends State<FutureSection<T>> {
           return widget.loaderBuilder(context);
         }
 
-        return SpinKitPulse(
-          color: widget.loaderColor,
-          size: widget.loaderSize,
+        return Padding(
+          padding: widget.loaderPadding,
+          child: SpinKitRing(
+            lineWidth: 2.0,
+            color: widget.loaderColor,
+            size: widget.loaderSize,
+          ),
         );
       },
     );
