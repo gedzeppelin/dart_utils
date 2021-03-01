@@ -1,4 +1,4 @@
-import "package:pagination_annotation/pagination_annotation.dart";
+import "package:enigma_annotation/enigma_annotation.dart";
 
 String makePaginatorSuffix(Style style, String inputClass) {
   switch (style) {

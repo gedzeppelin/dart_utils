@@ -1,4 +1,4 @@
-# Dart utils
+# Enigma dart
 
  A collection of dart/flutter util libraries and widgets.
 

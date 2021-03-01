@@ -3,7 +3,7 @@ import "dart:convert" show json, utf8;
 import "package:dartz/dartz.dart";
 import "package:flutter/material.dart";
 import "package:http/http.dart" as http show Response, StreamedResponse;
-import "package:pagination_annotation/pagination_annotation.dart";
+import "package:enigma_annotation/enigma_annotation.dart";
 
 part "response_ext.dart";
 

@@ -1,9 +1,9 @@
 # Read about `build.yaml` at https://pub.dev/packages/build_config
 builders:
   pagination:
-    import: "package:pagination_codegen/builder.dart"
+    import: "package:enigma_serializable/builder.dart"
     builder_factories: ["paginationBuilder"]
-    build_extensions: {".dart": [".pagination.g.part"]}
+    build_extensions: {".dart": [".g.part"]}
     auto_apply: dependents
     build_to: cache
     applies_builders: ["source_gen|combining_builder"]

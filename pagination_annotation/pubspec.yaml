@@ -1,9 +1,0 @@
-name: pagination_annotation
-description: An annotation processor for @Paginated annotations.
-version: 0.0.2
-author: Gedy Palomino <gedy.palomino@gmail.com>
-
-environment:  
-  sdk: ">=2.0.0 <3.0.0" 
-
-dependencies:

@@ -2,7 +2,7 @@ import "dart:async";
 
 import "package:analyzer/dart/element/element.dart";
 import "package:build/build.dart";
-import "package:pagination_annotation/pagination_annotation.dart";
+import "package:enigma_annotation/enigma_annotation.dart";
 import "package:source_gen/source_gen.dart";
 
 import "util.dart";

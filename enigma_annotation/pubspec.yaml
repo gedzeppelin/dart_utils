@@ -1,0 +1,10 @@
+name: enigma_annotation
+repository: https://github.com/gedzeppelin/enigma_dart
+description: Annotations that support serialization and deserialization of EnigmaUI conventions via the `engima_serializable` package.
+version: 0.0.1
+# author: Gedy Palomino <gedy.palomino@gmail.com>
+
+environment:  
+  sdk: ">=2.0.0 <3.0.0" 
+
+dependencies:

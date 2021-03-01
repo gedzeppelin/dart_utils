@@ -1,5 +1,5 @@
 import "package:flutter/material.dart";
-import "package:pagination_annotation/pagination_annotation.dart";
+import "package:enigma_annotation/enigma_annotation.dart";
 
 import "package:enigma_dart/src/core/response.dart";
 import "package:enigma_dart/src/widgets/buttons/retry_button.dart";
