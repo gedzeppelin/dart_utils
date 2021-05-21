@@ -1,7 +1,7 @@
 import "package:flutter/material.dart";
 
 class PaginationBottomLoader extends StatelessWidget {
-  const PaginationBottomLoader({Key key}) : super(key: key);
+  const PaginationBottomLoader({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +21,7 @@ class PaginationBottomLoader extends StatelessWidget {
 }
 
 class PaginationFullLoader extends StatelessWidget {
-  const PaginationFullLoader({Key key}) : super(key: key);
+  const PaginationFullLoader({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -32,9 +32,9 @@ class PaginationFullLoader extends StatelessWidget {
 }
 
 class PaginationEmpty extends StatelessWidget {
-  const PaginationEmpty({this.message, Key key}) : super(key: key);
+  const PaginationEmpty({this.message, Key? key}) : super(key: key);
 
-  final Text message;
+  final Text? message;
 
   @override
   Widget build(BuildContext context) {

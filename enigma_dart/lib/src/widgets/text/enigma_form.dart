@@ -2,20 +2,21 @@ import "package:flutter/material.dart";
 
 import "enigma_text_field.dart";
 
-typedef Widget FormBuilder(BuildContext context, List<EnigmaTextField> formItems);
+typedef Widget FormBuilder(
+    BuildContext context, List<EnigmaTextField> formItems);
 
 class EnigmaForm extends StatefulWidget {
   EnigmaForm({
-    Key key,
-    @required this.formItems,
+    Key? key,
+    required this.formItems,
     this.formBuilder,
     this.isExpanded = true,
     this.isScrollable = true,
     this.padding,
   }) : super(key: key);
 
-  final FormBuilder formBuilder;
-  final EdgeInsets padding;
+  final FormBuilder? formBuilder;
+  final EdgeInsets? padding;
   final bool isExpanded;
   final bool isScrollable;
   final List<EnigmaTextField> formItems;
@@ -25,8 +26,8 @@ class EnigmaForm extends StatefulWidget {
 }
 
 class EnigmaFormState extends State<EnigmaForm> {
-  List<FocusNode> focusNodeList;
-  List<EnigmaTextField> formItems;
+  late List<FocusNode> focusNodeList;
+  late List<EnigmaTextField> formItems;
   final formKey = GlobalKey<FormState>();
 
   @override
@@ -45,6 +46,7 @@ class EnigmaFormState extends State<EnigmaForm> {
       nodeSize,
       (_) => FocusNode(),
     );
+
     formItems = List<EnigmaTextField>.generate(
       nodeSize,
       (int idx) => widget.formItems[idx].copyWith(
@@ -54,13 +56,14 @@ class EnigmaFormState extends State<EnigmaForm> {
     );
   }
 
-  bool get isValid => formKey.currentState.validate();
+  bool get isValid => formKey.currentState?.validate() ?? false;
 
   @override
   Widget build(BuildContext context) {
     final form = Form(
       key: formKey,
-      child: widget.formBuilder != null ? widget.formBuilder(context, formItems) : Column(children: formItems),
+      child: widget.formBuilder?.call(context, formItems) ??
+          Column(children: formItems),
     );
 
     final body = widget.isScrollable

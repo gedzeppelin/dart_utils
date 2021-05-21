@@ -1,4 +1,4 @@
-import 'dart:async';
+import "dart:async";
 
 typedef OnLoaderButtonPressed = FutureOr<void> Function(
   void Function() startLoading,

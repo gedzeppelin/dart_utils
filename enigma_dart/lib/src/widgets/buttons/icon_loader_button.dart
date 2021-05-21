@@ -5,9 +5,9 @@ import "common.dart";
 
 class IconLoaderButton extends StatefulWidget {
   const IconLoaderButton({
-    Key key,
-    @required this.icon,
-    @required this.onTap,
+    Key? key,
+    required this.icon,
+    required this.onTap,
     this.margin,
     this.boxSize = 24.0,
     this.iconSize = 24.0,
@@ -20,16 +20,16 @@ class IconLoaderButton extends StatefulWidget {
 
   final Icon icon;
   final OnLoaderButtonPressed onTap;
-  final EdgeInsets margin;
+  final EdgeInsets? margin;
   final double boxSize;
   final double iconSize;
-  final Color color;
+  final Color? color;
 
   final bool enabled;
 
   // Loader properties.
-  final double loaderSize;
-  final Color loaderColor;
+  final double? loaderSize;
+  final Color? loaderColor;
 
   @override
   IconLoaderButtonState createState() => IconLoaderButtonState();

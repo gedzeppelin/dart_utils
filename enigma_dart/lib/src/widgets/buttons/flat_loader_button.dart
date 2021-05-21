@@ -5,9 +5,9 @@ import "common.dart";
 
 class FlatLoaderButton extends StatefulWidget {
   const FlatLoaderButton({
-    Key key,
-    @required this.child,
-    @required this.onTap,
+    Key? key,
+    required this.child,
+    required this.onTap,
     this.margin,
     this.width,
     this.height = 50.0,
@@ -19,14 +19,14 @@ class FlatLoaderButton extends StatefulWidget {
 
   final Widget child;
   final OnLoaderButtonPressed onTap;
-  final EdgeInsets margin;
-  final double width;
-  final double height;
-  final Color color;
+  final EdgeInsets? margin;
+  final double? width;
+  final double? height;
+  final Color? color;
 
   // Loader properties.
   final double loaderSize;
-  final Color loaderColor;
+  final Color? loaderColor;
 
   @override
   FlatLoaderButtonState createState() => FlatLoaderButtonState();
@@ -60,14 +60,16 @@ class FlatLoaderButtonState extends State<FlatLoaderButton> {
 
     final child = Visibility(
       visible: !_isLoading,
-      child: FlatButton(
+      child: TextButton(
         child: widget.child,
         onPressed: onPressed,
-        color: widget.color,
+        style: TextButton.styleFrom(
+          primary: widget.color,
+        ),
       ),
       replacement: SpinKitWave(
         size: widget.loaderSize,
-        color: widget.loaderColor ?? isLight ? Colors.black : Colors.white,
+        color: widget.loaderColor ?? (isLight ? Colors.black : Colors.white),
       ),
     );
 

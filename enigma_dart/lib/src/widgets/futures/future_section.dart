@@ -1,7 +1,7 @@
+import "package:enigma_core/enigma_core.dart";
 import "package:flutter/material.dart";
 import "package:flutter_spinkit/flutter_spinkit.dart";
 
-import "package:enigma_dart/src/core/response.dart";
 import "util.dart";
 
 class RefreshNotification extends Notification {
@@ -10,9 +10,9 @@ class RefreshNotification extends Notification {
 
 class FutureSection<T> extends StatefulWidget {
   FutureSection({
-    Key key,
-    @required this.futureCallback,
-    @required this.builder,
+    Key? key,
+    required this.futureCallback,
+    required this.builder,
     this.errorBuilder,
     this.loaderBuilder,
     this.loaderColor = Colors.blue,
@@ -22,20 +22,20 @@ class FutureSection<T> extends StatefulWidget {
   }) : super(key: key);
 
   final SuccessBuilder<T> builder;
-  final ErrorBuilder<T> errorBuilder;
+  final ErrorBuilder<T>? errorBuilder;
   final FutureCallback<T> futureCallback;
-  final WidgetBuilder loaderBuilder;
+  final WidgetBuilder? loaderBuilder;
   final Color loaderColor;
   final EdgeInsets loaderPadding;
   final double loaderSize;
-  final OnResolve<T> onResolve;
+  final OnResolve<T>? onResolve;
 
   @override
   FutureSectionState<T> createState() => FutureSectionState<T>();
 }
 
 class FutureSectionState<T> extends State<FutureSection<T>> {
-  Future<Response<T>> _futureData;
+  late Future<Response<T>> _futureData;
 
   @override
   void initState() {
@@ -44,7 +44,10 @@ class FutureSectionState<T> extends State<FutureSection<T>> {
     _futureData = widget.futureCallback();
 
     // On resolve method.
-    _futureData.attachOnSuccess(widget.onResolve);
+    final _onResolve = widget.onResolve;
+    if (_onResolve != null) {
+      _futureData.attachOnSuccess(_onResolve);
+    }
   }
 
   Future<Response<T>> refresh() {
@@ -53,7 +56,10 @@ class FutureSectionState<T> extends State<FutureSection<T>> {
     });
 
     // On resolve method.
-    _futureData.attachOnSuccess(widget.onResolve);
+    final _onResolve = widget.onResolve;
+    if (_onResolve != null) {
+      _futureData.attachOnSuccess(_onResolve);
+    }
 
     return _futureData;
   }
@@ -64,33 +70,31 @@ class FutureSectionState<T> extends State<FutureSection<T>> {
       future: _futureData,
       builder: (BuildContext context, AsyncSnapshot<Response<T>> snapshot) {
         if (snapshot.hasData) {
-          return snapshot.data.fold(
-            (payload) => widget.builder(context, payload),
-            (err) {
+          return snapshot.data!.map(
+            ifOk: (ok) => widget.builder(context, ok.payload),
+            ifErr: (err) {
               final retryWidget = makeRetryWidget(refresh, err);
-              return widget.errorBuilder != null ? widget.errorBuilder(context, refresh, err) : retryWidget;
+              return widget.errorBuilder?.call(context, refresh, err) ??
+                  retryWidget;
             },
           );
         } else if (snapshot.hasError) {
-          final ErrInternal<T> err = Response.err(snapshot.error);
+          final err = Err<T>(payload: snapshot.error);
           final retryWidget = makeRetryWidget(refresh, err);
 
-          return widget.errorBuilder != null ? widget.errorBuilder(context, refresh, err) : retryWidget;
+          return widget.errorBuilder?.call(context, refresh, err) ??
+              retryWidget;
         }
 
-        // By default show a progress bar.
-        if (widget.loaderBuilder != null) {
-          return widget.loaderBuilder(context);
-        }
-
-        return Padding(
-          padding: widget.loaderPadding,
-          child: SpinKitRing(
-            lineWidth: 2.0,
-            color: widget.loaderColor,
-            size: widget.loaderSize,
-          ),
-        );
+        return widget.loaderBuilder?.call(context) ??
+            Padding(
+              padding: widget.loaderPadding,
+              child: SpinKitRing(
+                lineWidth: 2.0,
+                color: widget.loaderColor,
+                size: widget.loaderSize,
+              ),
+            );
       },
     );
   }

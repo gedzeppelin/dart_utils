@@ -5,9 +5,9 @@ import "common.dart";
 
 class RaisedLoaderButton extends StatefulWidget {
   const RaisedLoaderButton({
-    Key key,
-    @required this.child,
-    @required this.onTap,
+    Key? key,
+    required this.child,
+    required this.onTap,
     this.margin,
     this.width = 250.0,
     this.height = 50.0,
@@ -26,22 +26,22 @@ class RaisedLoaderButton extends StatefulWidget {
 
   final Widget child;
   final OnLoaderButtonPressed onTap;
-  final EdgeInsets margin;
+  final EdgeInsets? margin;
   final double width;
   final double height;
-  final Color color;
+  final Color? color;
   final double radius;
 
   // Loader properties.
   final double loaderSize;
-  final Color loaderColor;
+  final Color? loaderColor;
 
   // Border properties.
-  final Color borderColor;
+  final Color? borderColor;
   final double borderWidth;
 
   // Shadow properties.
-  final Color shadowColor;
+  final Color? shadowColor;
   final Offset shadowOffset;
 
   @override
@@ -88,16 +88,7 @@ class RaisedLoaderButtonState extends State<RaisedLoaderButton> {
             )
           ],
         ),
-        child: RaisedButton(
-          elevation: 0.0,
-          color: widget.color ?? Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: new BorderRadius.circular(widget.radius),
-            side: BorderSide(
-              color: widget.borderColor ?? Colors.black,
-              width: widget.borderWidth,
-            ),
-          ),
+        child: ElevatedButton(
           child: Visibility(
             visible: !_isLoading,
             child: DefaultTextStyle(
@@ -114,12 +105,23 @@ class RaisedLoaderButtonState extends State<RaisedLoaderButton> {
             ),
           ),
           onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            primary: widget.color ?? Colors.white,
+            elevation: 0.0,
+            shape: RoundedRectangleBorder(
+              borderRadius: new BorderRadius.circular(widget.radius),
+              side: BorderSide(
+                color: widget.borderColor ?? Colors.black,
+                width: widget.borderWidth,
+              ),
+            ),
+          ),
         ),
       );
     }
 
     return Stack(
-      overflow: Overflow.visible,
+      clipBehavior: Clip.none,
       children: <Widget>[
         Positioned(
           top: widget.shadowOffset.dy,
@@ -141,17 +143,7 @@ class RaisedLoaderButtonState extends State<RaisedLoaderButton> {
           margin: widget.margin,
           height: widget.height,
           width: widget.width,
-          child: RaisedButton(
-            elevation: 0.0,
-            splashColor: Colors.white54,
-            color: widget.color ?? Colors.black,
-            shape: RoundedRectangleBorder(
-              borderRadius: new BorderRadius.circular(widget.radius),
-              side: BorderSide(
-                color: widget.borderColor ?? Colors.white,
-                width: widget.borderWidth,
-              ),
-            ),
+          child: ElevatedButton(
             child: Visibility(
               visible: !_isLoading,
               child: DefaultTextStyle(
@@ -168,6 +160,17 @@ class RaisedLoaderButtonState extends State<RaisedLoaderButton> {
               ),
             ),
             onPressed: onPressed,
+            style: ElevatedButton.styleFrom(
+              primary: widget.color ?? Colors.black,
+              elevation: 0.0,
+              shape: RoundedRectangleBorder(
+                borderRadius: new BorderRadius.circular(widget.radius),
+                side: BorderSide(
+                  color: widget.borderColor ?? Colors.white,
+                  width: widget.borderWidth,
+                ),
+              ),
+            ),
           ),
         ),
       ],

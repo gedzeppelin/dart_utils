@@ -1,15 +1,18 @@
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 
+import "package:enigma_core/enigma_core.dart";
+
 typedef void OnSubmit(String value, FocusNode focusNode);
 typedef void OnFocusChange(bool hasFocus);
-typedef String Validator(String value);
+typedef String? Validator(String? value);
 
 class EnigmaTextField extends StatefulWidget {
-  static const Pattern emailRegex = r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+";
+  static const String emailRegex =
+      r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+";
 
   EnigmaTextField({
-    Key key,
+    Key? key,
     this.controller,
     this.focusNode,
     this.formatters,
@@ -31,44 +34,44 @@ class EnigmaTextField extends StatefulWidget {
   static const String emailValidationMessage = "Correo inválido";
   static const String emptyValidationMessage = "Campo obligatorio";
 
-  final EdgeInsets margin;
-  final FocusNode focusNode;
-  final FocusNode nextNode;
-  final List<TextInputFormatter> formatters;
-  final OnFocusChange onFocusChange;
-  final OnSubmit onSubmit;
-  final String hint;
-  final String initialValue;
-  final String label;
+  final EdgeInsets? margin;
+  final FocusNode? focusNode;
+  final FocusNode? nextNode;
+  final List<TextInputFormatter>? formatters;
+  final OnFocusChange? onFocusChange;
+  final OnSubmit? onSubmit;
+  final String? hint;
+  final String? initialValue;
+  final String? label;
   final TextCapitalization textCapitalization;
-  final TextEditingController controller;
-  final TextInputAction inputAction;
-  final TextInputType inputType;
-  final Validator validator;
+  final TextEditingController? controller;
+  final TextInputAction? inputAction;
+  final TextInputType? inputType;
+  final Validator? validator;
   final bool isPassword;
-  final int maxLength;
+  final int? maxLength;
 
   @override
   _EnigmaTextFieldState createState() => _EnigmaTextFieldState();
 
   EnigmaTextField copyWith({
-    Key key,
-    final EdgeInsets margin,
-    final FocusNode focusNode,
-    final FocusNode nextNode,
-    final List<TextInputFormatter> formatters,
-    final OnFocusChange onFocusChange,
-    final OnSubmit onSubmit,
-    final String hint,
-    final String initialValue,
-    final String label,
-    final TextCapitalization textCapitalization,
-    final TextEditingController controller,
-    final TextInputAction inputAction,
-    final TextInputType inputType,
-    final Validator validator,
-    final bool isPassword,
-    final int maxLength,
+    Key? key,
+    final EdgeInsets? margin,
+    final FocusNode? focusNode,
+    final FocusNode? nextNode,
+    final List<TextInputFormatter>? formatters,
+    final OnFocusChange? onFocusChange,
+    final OnSubmit? onSubmit,
+    final String? hint,
+    final String? initialValue,
+    final String? label,
+    final TextCapitalization? textCapitalization,
+    final TextEditingController? controller,
+    final TextInputAction? inputAction,
+    final TextInputType? inputType,
+    final Validator? validator,
+    final bool? isPassword,
+    final int? maxLength,
   }) {
     return EnigmaTextField(
       controller: controller ?? this.controller,
@@ -91,16 +94,18 @@ class EnigmaTextField extends StatefulWidget {
     );
   }
 
-  static String emptyValidator(String value) {
-    return value.isEmpty ? emptyValidationMessage : null;
+  static String? emptyValidator(String? value) {
+    return value?.isEmpty ?? true ? emptyValidationMessage : null;
   }
 
-  static String nullValidator(Object value) {
+  static String? nullValidator(Object? value) {
     return value == null ? emptyValidationMessage : null;
   }
 
-  static String emailValidator(String value) {
-    return !RegExp(emailRegex).hasMatch(value) ? emailValidationMessage : null;
+  static String? emailValidator(String? value) {
+    return value != null && !RegExp(emailRegex).hasMatch(value)
+        ? emailValidationMessage
+        : null;
   }
 }
 
@@ -110,19 +115,27 @@ class _EnigmaTextFieldState extends State<EnigmaTextField> {
   @override
   void initState() {
     super.initState();
-    if (widget.onFocusChange != null && widget.focusNode != null) {
-      widget.focusNode.addListener(
-        () => widget.onFocusChange(widget.focusNode.hasFocus),
-      );
+
+    final _onFocusChange = widget.onFocusChange;
+    final _focusNode = widget.focusNode;
+    if (_onFocusChange != null && _focusNode != null) {
+      _focusNode.addListener(() => _onFocusChange(_focusNode.hasFocus));
     }
-    if (widget.initialValue != null && widget.controller != null) {
-      widget.controller.text = widget.initialValue;
+
+    final _controller = widget.controller;
+    final _initialValue = widget.initialValue;
+    if (_controller != null && _initialValue != null) {
+      _controller.text = _initialValue;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     TextFormField textField;
+
+    final _onSubmit = widget.onSubmit;
+    final _focusNode = widget.focusNode;
+    final _nextNode = widget.nextNode;
 
     if (widget.isPassword) {
       textField = TextFormField(
@@ -152,11 +165,11 @@ class _EnigmaTextFieldState extends State<EnigmaTextField> {
           ),
         ),
         textCapitalization: widget.textCapitalization,
-        onFieldSubmitted: widget.onSubmit != null
-            ? (String v) => widget.onSubmit(v, widget.focusNode)
-            : widget.nextNode != null
-                ? (_) => widget.nextNode.requestFocus()
-                : (_) => FocusScope.of(context).nextFocus(),
+        onFieldSubmitted: _onSubmit != null && _focusNode != null
+            ? (String v) => _onSubmit(v, _focusNode)
+            : (_) => _nextNode != null
+                ? _nextNode.requestFocus()
+                : FocusScope.of(context).nextFocus(),
       );
     } else {
       textField = TextFormField(
@@ -177,11 +190,11 @@ class _EnigmaTextFieldState extends State<EnigmaTextField> {
           hintText: widget.hint,
         ),
         textCapitalization: widget.textCapitalization,
-        onFieldSubmitted: widget.onSubmit != null
-            ? (String v) => widget.onSubmit(v, widget.focusNode)
-            : widget.nextNode != null
-                ? (_) => widget.nextNode.requestFocus()
-                : (_) => FocusScope.of(context).nextFocus(),
+        onFieldSubmitted: _onSubmit != null && _focusNode != null
+            ? (String v) => _onSubmit(v, _focusNode)
+            : (_) => _nextNode != null
+                ? _nextNode.requestFocus()
+                : FocusScope.of(context).nextFocus(),
       );
     }
 

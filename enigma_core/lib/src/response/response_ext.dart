@@ -1,56 +1,83 @@
-part of 'response.dart';
+part of "response.dart";
 
-Future<Either<http.Response, ErrMultiple<T>>> _makeAttempts<T>(
+Future<String?> _makeAttempts(
   Future<http.Response> httpRequest,
-  int attempts,
+  int? attempts,
 ) async {
-  final List<ErrInternal<T>> errors = List();
+  final _attempts = attempts ?? options.response.attempts;
 
-  for (var i = 0; i < attempts; i++) {
+  for (var i = 0; i < _attempts; i++) {
     try {
       final response = await httpRequest;
-      return Left(response);
-    } catch (e, s) {
-      final errorUtil = ErrInternal<T>(e, s);
-      errors.add(errorUtil);
+      return utf8.decode(response.bodyBytes);
+    } catch (_) {
+      continue;
     }
   }
 
-  return Right(
-    ErrMultiple<T>(errors),
-  );
+  return null;
 }
 
 // ANCHOR Request helpers.
 
 /// Builds a [Response] with HTTP"s response status code comparison.
-Future<Response<T>> makeRequest<T extends Object>({
-  @required Future<http.Response> httpRequest,
-  @required Deserializer<T> deserializer,
-  int attempts = Response.defaultAttempts,
+Future<Response<T>> makeRequest<T>({
+  required Future<http.Response> httpRequest,
+  required Deserializer<T> deserializer,
+  int? attempts,
+  IfOkFold<T>? ifOk,
+  IfErrFold<T>? ifErr,
+  NotifyKinds? notify,
+  String? message,
 }) async {
-  final result = await _makeAttempts<T>(httpRequest, attempts);
+  final _attempts = attempts ?? options.response.attempts;
 
-  return result.fold(
-    (response) {
-      try {
-        final body = utf8.decode(response.bodyBytes);
-        final decodedBody = json.decode(body) as Map<String, dynamic>;
+  Response<T>? result;
 
-        if (response.isSuccessful) {
-          final payload = deserializer(decodedBody);
-          return Ok<T>(payload);
-        }
+  for (var i = 0; i < _attempts; i++) {
+    try {
+      final response = await httpRequest;
 
-        return ErrExternal<T>(response);
-      } catch (e, s) {
-        return ErrInternal<T>(e, s);
+      if (response.isSuccessful) {
+        final stringBody = utf8.decode(response.bodyBytes);
+        final body = json.decode(stringBody) as Map<String, dynamic>;
+        final payload = deserializer(body);
+
+        result = Ok(
+          payload: payload,
+          requestURL: response.request?.url,
+          status: response.statusCode,
+          notifyKind: notify,
+          message: message,
+        );
+      } else if (i + 1 == _attempts) {
+        final stringBody = utf8.decode(response.bodyBytes);
+        final body = json.decode(stringBody) as Map<String, dynamic>;
+
+        result = Err(
+          payload: body,
+          requestURL: response.request?.url,
+          status: response.statusCode,
+          notifyKind: notify,
+          message: message,
+        );
       }
-    },
-    (err) => err,
-  );
-}
+    } catch (_) {
+      continue;
+    }
+  }
 
+  if (result == null) {
+    result = Err<T>(
+      notifyKind: notify,
+      message: message,
+    );
+  }
+
+  result.fold(ifOk: ifOk, ifErr: ifErr);
+  return result;
+}
+/* 
 /// Builds a [Response] with HTTP"s response status code comparison.
 Future<Response<P>> makePaginatedRequest<P extends Paginated>({
   @required Future<http.Response> httpRequest,
@@ -176,7 +203,10 @@ Future<Response<Tuple4<T, S, U, V>>> waitResponses4<T, S, U, V>(
   final response2 = responses[2] as Response<U>;
   final response3 = responses[3] as Response<V>;
 
-  return response0 is Ok<T> && response1 is Ok<S> && response2 is Ok<U> && response3 is Ok<V>
+  return response0 is Ok<T> &&
+          response1 is Ok<S> &&
+          response2 is Ok<U> &&
+          response3 is Ok<V>
       ? Response.ok(Tuple4(
           response0.payload,
           response1.payload,
@@ -193,7 +223,8 @@ Future<Response<Tuple5<T, S, U, V, W>>> waitResponses5<T, S, U, V, W>(
   Future<Response<V>> future3,
   Future<Response<W>> future4,
 ) async {
-  final responses = await Future.wait([future0, future1, future2, future3, future4]);
+  final responses =
+      await Future.wait([future0, future1, future2, future3, future4]);
 
   final response0 = responses[0] as Response<T>;
   final response1 = responses[1] as Response<S>;
@@ -201,7 +232,11 @@ Future<Response<Tuple5<T, S, U, V, W>>> waitResponses5<T, S, U, V, W>(
   final response3 = responses[3] as Response<V>;
   final response4 = responses[4] as Response<W>;
 
-  return response0 is Ok<T> && response1 is Ok<S> && response2 is Ok<U> && response3 is Ok<V> && response4 is Ok<W>
+  return response0 is Ok<T> &&
+          response1 is Ok<S> &&
+          response2 is Ok<U> &&
+          response3 is Ok<V> &&
+          response4 is Ok<W>
       ? Response.ok(Tuple5(
           response0.payload,
           response1.payload,
@@ -214,7 +249,7 @@ Future<Response<Tuple5<T, S, U, V, W>>> waitResponses5<T, S, U, V, W>(
 
 Future<Response<List<T>>> waitAll<T>(List<Future<Response<T>>> futures) async {
   final responses = await Future.wait(futures);
-  final result = List<T>();
+  final List<T> result = [];
 
   for (final item in responses) {
     if (item is Err<T>) {
@@ -228,3 +263,4 @@ Future<Response<List<T>>> waitAll<T>(List<Future<Response<T>>> futures) async {
 
   return Ok(result);
 }
+ */

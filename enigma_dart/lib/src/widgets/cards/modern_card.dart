@@ -1,16 +1,17 @@
 import "package:flutter/material.dart";
 
-typedef CardBuilder = Widget Function(BuildContext context, Radius borderRadius);
+typedef CardBuilder = Widget Function(
+    BuildContext context, Radius borderRadius);
 
 class ModernCard extends StatelessWidget {
   const ModernCard({
-    Key key,
+    Key? key,
     this.margin = const EdgeInsets.all(0.0),
     this.padding = const EdgeInsets.all(0.0),
     this.height,
     this.width,
     this.onTap,
-    @required this.builder,
+    required this.builder,
     // Border.
     this.borderColor = Colors.black,
     this.borderRadius = 8.0,
@@ -23,9 +24,9 @@ class ModernCard extends StatelessWidget {
   // Main properties.
   final EdgeInsets margin;
   final EdgeInsets padding;
-  final double height;
-  final double width;
-  final void Function() onTap;
+  final double? height;
+  final double? width;
+  final void Function()? onTap;
   final CardBuilder builder;
 
   // Border properties.

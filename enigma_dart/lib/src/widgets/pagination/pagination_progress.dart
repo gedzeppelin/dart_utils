@@ -1,29 +1,32 @@
+import "package:enigma_core/enigma_core.dart";
 import "package:flutter/material.dart";
 import "package:enigma_annotation/enigma_annotation.dart";
 
-import "package:enigma_dart/src/core/response.dart";
 import "package:enigma_dart/src/widgets/buttons/retry_button.dart";
 
 import "util.dart";
 
-typedef PaginatedCallback<T, P extends Paginated<T>> = Future<Response<P>> Function(int nextPage);
+typedef PaginatedCallback<T, P extends Paginated<T>> = Future<Response<P>>
+    Function(int nextPage);
 
 typedef ItemBuilder<T> = Function(BuildContext context, T item, int idx);
 typedef SeparatorBuilder = Widget Function(BuildContext context, int idx);
-typedef ErrorBuilder<T, P extends Paginated<T>> = Widget Function(Err<P> error, void Function() refresh);
+typedef ErrorBuilder<T, P extends Paginated<T>> = Widget Function(
+    Err<P> error, void Function() refresh);
 
 enum PaginationViewType { listView, gridView }
 
 class PaginationView<T, P extends Paginated<T>> extends StatefulWidget {
   const PaginationView({
-    Key key,
-    @required this.itemBuilder,
-    @required this.pageFetch,
+    Key? key,
+    required this.itemBuilder,
+    required this.pageFetch,
     this.onEmpty = const PaginationEmpty(),
     this.onError,
     this.pageRefresh,
     this.pullToRefresh = true,
-    this.gridDelegate = const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+    this.gridDelegate =
+        const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
     this.initialPage = 1,
     this.preloadedPaginated,
     this.initialLoader = const PaginationFullLoader(),
@@ -43,38 +46,42 @@ class PaginationView<T, P extends Paginated<T>> extends StatefulWidget {
   final Widget onEmpty;
   final EdgeInsets padding;
   final PaginatedCallback<T, P> pageFetch;
-  final PaginatedCallback<T, P> pageRefresh;
-  final ScrollPhysics physics;
+  final PaginatedCallback<T, P>? pageRefresh;
+  final ScrollPhysics? physics;
   final int initialPage;
-  final P preloadedPaginated;
+  final P? preloadedPaginated;
   final bool pullToRefresh;
   final bool reverse;
   final Axis scrollDirection;
   final SliverGridDelegate gridDelegate;
   final PaginationViewType paginationViewType;
   final bool shrinkWrap;
-  final ScrollController scrollController;
+  final ScrollController? scrollController;
 
   @override
   PaginationViewState<T, P> createState() => PaginationViewState<T, P>();
 
   final ItemBuilder<T> itemBuilder;
-  final ErrorBuilder<T, P> onError;
-  final SeparatorBuilder separatorBuilder;
+  final ErrorBuilder<T, P>? onError;
+  final SeparatorBuilder? separatorBuilder;
 }
 
-class PaginationViewState<T, P extends Paginated<T>> extends State<PaginationView<T, P>> {
-  ScrollController _scrollController;
+class PaginationViewState<T, P extends Paginated<T>>
+    extends State<PaginationView<T, P>> {
+  late ScrollController _scrollController;
 
-  List<T> _items;
+  late List<T> _items;
 
-  Response<P> _currentResponse;
-  int _nextPage;
+  Response<P>? _currentResponse;
+  late int _nextPage;
   bool _isBottomLoading = false;
 
   _scrollListener() {
     final sPosition = _scrollController.position;
-    if (!_isBottomLoading && _scrollController.offset >= sPosition.maxScrollExtent - 25 && !sPosition.outOfRange) {
+
+    if (!_isBottomLoading &&
+        _scrollController.offset >= sPosition.maxScrollExtent - 25 &&
+        !sPosition.outOfRange) {
       final response = _currentResponse;
 
       if (response != null && response is Ok<P> && response.payload.haveNext) {
@@ -110,8 +117,9 @@ class PaginationViewState<T, P extends Paginated<T>> extends State<PaginationVie
     _scrollController = widget.scrollController ?? ScrollController();
     _scrollController.addListener(_scrollListener);
 
-    if (widget.preloadedPaginated != null) {
-      _currentResponse = Response.ok(widget.preloadedPaginated);
+    final _currentPayload = widget.preloadedPaginated;
+    if (_currentPayload != null) {
+      _currentResponse = Ok(payload: _currentPayload);
     }
     _nextPage = widget.initialPage;
     if (_currentResponse == null) {
@@ -123,7 +131,9 @@ class PaginationViewState<T, P extends Paginated<T>> extends State<PaginationVie
 
   @override
   Widget build(BuildContext context) {
-    if (_currentResponse == null) {
+    final _current = _currentResponse;
+
+    if (_current == null) {
       return widget.initialLoader;
     }
 
@@ -131,8 +141,8 @@ class PaginationViewState<T, P extends Paginated<T>> extends State<PaginationVie
       return widget.onEmpty;
     }
 
-    return _currentResponse.fold(
-      (payload) {
+    return _current.map(
+      ifOk: (payload) {
         if (widget.paginationViewType == PaginationViewType.gridView) {
           if (widget.pullToRefresh) {
             return RefreshIndicator(
@@ -151,15 +161,15 @@ class PaginationViewState<T, P extends Paginated<T>> extends State<PaginationVie
         }
         return _makeListView();
       },
-      (err) => widget.onError != null
-          ? widget.onError(err, refresh)
-          : RetryWidget(
-              onTap: (startLoading, stopLoading) async {
-                startLoading();
-                await refresh();
-                stopLoading();
-              },
-            ),
+      ifErr: (err) =>
+          widget.onError?.call(err, refresh) ??
+          RetryWidget(
+            onTap: (startLoading, stopLoading) async {
+              startLoading();
+              await refresh();
+              stopLoading();
+            },
+          ),
     );
   }
 

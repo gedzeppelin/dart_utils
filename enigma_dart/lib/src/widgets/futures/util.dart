@@ -1,6 +1,6 @@
+import "package:enigma_core/enigma_core.dart";
 import "package:flutter/material.dart";
 
-import "package:enigma_dart/src/core/response.dart";
 import "package:enigma_dart/src/widgets/buttons/retry_button.dart";
 
 typedef FutureCallback<T> = Future<Response<T>> Function();

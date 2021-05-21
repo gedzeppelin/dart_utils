@@ -1,17 +1,17 @@
+import "package:enigma_core/enigma_core.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:flutter_spinkit/flutter_spinkit.dart";
 
-import "package:enigma_dart/src/core/response.dart";
 import "util.dart";
 
 // ANCHOR FuturePage StatefulWidget.
-class FuturePage<T extends Object> extends StatefulWidget {
+class FuturePage<T> extends StatefulWidget {
   FuturePage({
-    Key key,
-    @required this.futureCallback,
-    @required this.appBar,
-    @required this.builder,
+    Key? key,
+    required this.futureCallback,
+    required this.appBar,
+    required this.builder,
     this.onResolve,
     this.isRefreshable = true,
     // Scaffold.
@@ -30,8 +30,8 @@ class FuturePage<T extends Object> extends StatefulWidget {
 
   final AppBar appBar;
   final SuccessBuilder<T> builder;
-  final Drawer drawer;
-  final ErrorBuilder errorBuilder;
+  final Drawer? drawer;
+  final ErrorBuilder? errorBuilder;
   final Color errorButtonTextColor;
   // Error widget parameters.
   final Color errorTextColor;
@@ -41,14 +41,14 @@ class FuturePage<T extends Object> extends StatefulWidget {
   final FutureCallback<T> futureCallback;
 
   final bool isRefreshable;
-  final WidgetBuilder loaderBuilder;
+  final WidgetBuilder? loaderBuilder;
   // Loader widget parameters.
   final Color loaderColor;
 
   final double loaderSize;
-  final OnResolve<T> onResolve;
+  final OnResolve<T>? onResolve;
   // Scaffold parameters.
-  final GlobalKey<ScaffoldState> scaffoldKey;
+  final GlobalKey<ScaffoldState>? scaffoldKey;
 
   @override
   FuturePageState<T> createState() => FuturePageState<T>();
@@ -56,7 +56,7 @@ class FuturePage<T extends Object> extends StatefulWidget {
 
 // ANCHOR FuturePage State.
 class FuturePageState<T> extends State<FuturePage<T>> {
-  Future<Response<T>> _futureData;
+  late Future<Response<T>> _futureData;
   bool _isAppBarLoaderVisible = false;
 
   @override
@@ -66,7 +66,10 @@ class FuturePageState<T> extends State<FuturePage<T>> {
     _futureData = widget.futureCallback();
 
     // On resolve method.
-    _futureData.attachOnSuccess(widget.onResolve);
+    final _onResolve = widget.onResolve;
+    if (_onResolve != null) {
+      _futureData.attachOnSuccess(_onResolve);
+    }
   }
 
   Future<Response<T>> refresh() {
@@ -76,7 +79,10 @@ class FuturePageState<T> extends State<FuturePage<T>> {
     });
 
     // On resolve method.
-    _futureData.attachOnSuccess(widget.onResolve);
+    final _onResolve = widget.onResolve;
+    if (_onResolve != null) {
+      _futureData.attachOnSuccess(_onResolve);
+    }
 
     _futureData.whenComplete(() {
       setState(() => _isAppBarLoaderVisible = false);
@@ -102,7 +108,7 @@ class FuturePageState<T> extends State<FuturePage<T>> {
     );
 
     // AppBar (re)construction with _appBarLoader.
-    if (widget.appBar?.bottom == null) {
+    if (widget.appBar.bottom == null) {
       _appBar = widget.appBar.copyWith(
         bottom: PreferredSize(
           child: _appBarLoader,
@@ -110,19 +116,19 @@ class FuturePageState<T> extends State<FuturePage<T>> {
         ),
       );
     } else {
-      final PreferredSizeWidget _bottom = widget.appBar.bottom;
-      final Size _bottomSize = _bottom.preferredSize;
+      final _bottom = widget.appBar.bottom;
+      final _bottomSize = _bottom?.preferredSize;
       _appBar = widget.appBar.copyWith(
         bottom: PreferredSize(
           child: Column(
             children: <Widget>[
-              _bottom,
+              if (_bottom != null) _bottom,
               _appBarLoader,
             ],
           ),
           preferredSize: Size(
             MediaQuery.of(context).size.width,
-            _bottomSize.height + 4.0,
+            (_bottomSize?.height ?? 0) + 4.0,
           ),
         ),
       );
@@ -136,11 +142,9 @@ class FuturePageState<T> extends State<FuturePage<T>> {
         future: _futureData,
         builder: (BuildContext context, AsyncSnapshot<Response<T>> snapshot) {
           if (snapshot.hasData) {
-            final response = snapshot.data;
-
-            return response.fold(
-              (payload) {
-                final buildedChild = widget.builder(context, payload);
+            return snapshot.data!.map(
+              ifOk: (ok) {
+                final buildedChild = widget.builder(context, ok.payload);
 
                 if (widget.isRefreshable) {
                   return RefreshIndicator(
@@ -149,8 +153,12 @@ class FuturePageState<T> extends State<FuturePage<T>> {
                       setState(() {
                         _futureData = widget.futureCallback();
                       });
+
                       // On resolve method.
-                      _futureData.attachOnSuccess(widget.onResolve);
+                      final _onResolve = widget.onResolve;
+                      if (_onResolve != null) {
+                        _futureData.attachOnSuccess(_onResolve);
+                      }
 
                       await _futureData;
                     },
@@ -159,28 +167,26 @@ class FuturePageState<T> extends State<FuturePage<T>> {
 
                 return buildedChild;
               },
-              (err) {
-                final retryWidget = makeRetryWidget(refresh, response);
-                return widget.errorBuilder != null ? widget.errorBuilder(context, refresh, err) : retryWidget;
+              ifErr: (err) {
+                final retryWidget = makeRetryWidget(refresh, err);
+                return widget.errorBuilder?.call(context, refresh, err) ??
+                    retryWidget;
               },
             );
           } else if (snapshot.hasError) {
-            final ErrInternal<T> err = Response<T>.err(snapshot.error);
+            final err = Err<T>(payload: snapshot.error);
             final retryWidget = makeRetryWidget(refresh, err);
 
-            return widget.errorBuilder != null ? widget.errorBuilder(context, refresh, err) : retryWidget;
+            return widget.errorBuilder?.call(context, refresh, err) ??
+                retryWidget;
           }
 
-          // By default show a progress bar.
-          if (widget.loaderBuilder != null) {
-            return widget.loaderBuilder(context);
-          }
-
-          return SpinKitRing(
-            lineWidth: 2.0,
-            color: widget.loaderColor,
-            size: widget.loaderSize,
-          );
+          return widget.loaderBuilder?.call(context) ??
+              SpinKitRing(
+                lineWidth: 2.0,
+                color: widget.loaderColor,
+                size: widget.loaderSize,
+              );
         },
       ),
       drawer: widget.drawer,
@@ -192,31 +198,32 @@ extension AppBarExtension on AppBar {
   static AppBar withTitle(String title) => AppBar(title: Text(title));
 
   AppBar copyWith({
-    Key key,
-    Widget leading,
-    bool automaticallyImplyLeading,
-    Widget title,
-    List<Widget> actions,
-    Widget flexibleSpace,
-    PreferredSizeWidget bottom,
-    double elevation,
-    ShapeBorder shape,
-    Color backgroundColor,
-    Brightness brightness,
-    IconThemeData iconTheme,
-    IconThemeData actionsIconTheme,
-    TextTheme textTheme,
-    bool primary,
-    bool centerTitle,
-    bool excludeHeaderSemantics,
-    double titleSpacing,
-    double toolbarOpacity,
-    double bottomOpacity,
+    Key? key,
+    Widget? leading,
+    bool? automaticallyImplyLeading,
+    Widget? title,
+    List<Widget>? actions,
+    Widget? flexibleSpace,
+    PreferredSizeWidget? bottom,
+    double? elevation,
+    ShapeBorder? shape,
+    Color? backgroundColor,
+    Brightness? brightness,
+    IconThemeData? iconTheme,
+    IconThemeData? actionsIconTheme,
+    TextTheme? textTheme,
+    bool? primary,
+    bool? centerTitle,
+    bool? excludeHeaderSemantics,
+    double? titleSpacing,
+    double? toolbarOpacity,
+    double? bottomOpacity,
   }) {
     return AppBar(
       key: key ?? this.key,
       leading: leading ?? this.leading,
-      automaticallyImplyLeading: automaticallyImplyLeading ?? this.automaticallyImplyLeading,
+      automaticallyImplyLeading:
+          automaticallyImplyLeading ?? this.automaticallyImplyLeading,
       title: title ?? this.title,
       actions: actions ?? this.actions,
       flexibleSpace: flexibleSpace ?? this.flexibleSpace,
@@ -230,7 +237,8 @@ extension AppBarExtension on AppBar {
       textTheme: textTheme ?? this.textTheme,
       primary: primary ?? this.primary,
       centerTitle: centerTitle ?? this.centerTitle,
-      excludeHeaderSemantics: excludeHeaderSemantics ?? this.excludeHeaderSemantics,
+      excludeHeaderSemantics:
+          excludeHeaderSemantics ?? this.excludeHeaderSemantics,
       titleSpacing: titleSpacing ?? this.titleSpacing,
       toolbarOpacity: toolbarOpacity ?? this.toolbarOpacity,
       bottomOpacity: bottomOpacity ?? this.bottomOpacity,

@@ -23,7 +23,11 @@ class PaginationGenerator extends GeneratorForAnnotation<JsonPagination> {
           ),
         );
 
-    final String inputClass = element.name;
+    final String? inputClass = element.name;
+
+    if (inputClass == null) {
+      throw new Error();
+    }
 
     if (styles.length == 0) {
       throw AssertionError("Must specify at least one backend");

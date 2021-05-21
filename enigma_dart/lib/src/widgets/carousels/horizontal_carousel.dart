@@ -8,23 +8,23 @@ class HorizontalCarousel extends StatelessWidget {
   /// Carousel title.
   final List<Widget> items;
   final double height;
-  final String title;
+  final String? title;
   final double innerMargin;
   final double edgesMargin;
 
   HorizontalCarousel({
-    Key key,
-    @required this.items,
-    @required this.height,
+    Key? key,
+    required this.items,
+    required this.height,
     this.title,
     this.innerMargin = 8.0,
     this.edgesMargin = 16.0,
   }) : super(key: key);
 
   static List<Widget> withTitle({
-    @required List<Widget> items,
-    @required double height,
-    String title,
+    required List<Widget> items,
+    required double height,
+    String? title,
     double innerMargin = 8.0,
     double edgesMargin = 16.0,
   }) {
@@ -52,7 +52,9 @@ class HorizontalCarousel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (this.title == null) {
+    final _title = title;
+
+    if (_title == null) {
       return SizedBox(
         height: height,
         child: ListView(
@@ -69,7 +71,7 @@ class HorizontalCarousel extends StatelessWidget {
         Container(
             margin: const EdgeInsets.only(top: 12.0, left: 16.0, bottom: 4.0),
             child: Text(
-              title,
+              _title,
               style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16.0),
             )),
         // ANCHOR Product carousel itself.
@@ -86,8 +88,9 @@ class HorizontalCarousel extends StatelessWidget {
   }
 }
 
-List<Widget> _makeChildren(List<Widget> input, double innerMargin, double edgesMargin) {
-  List<Widget> widgetList = List<Widget>();
+List<Widget> _makeChildren(
+    List<Widget> input, double innerMargin, double edgesMargin) {
+  List<Widget> widgetList = [];
   final int lastIdx = input.length - 1;
 
   input.asMap().forEach((idx, widget) {

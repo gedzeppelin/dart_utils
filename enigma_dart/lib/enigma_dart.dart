@@ -1,9 +1,5 @@
 library enigma_dart;
 
-// ANCHOR Enigma dart core.
-
-export "src/core/response.dart";
-
 // ANCHOR Enigma dart utilities.
 
 export "src/util.dart";

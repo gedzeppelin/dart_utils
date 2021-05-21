@@ -10,16 +10,16 @@ typedef OnMutation = FutureOr<void> Function(
 
 class QuantityPicker extends StatefulWidget {
   const QuantityPicker({
-    Key key,
-    @required this.value,
+    Key? key,
+    required this.value,
     this.onAddPressed,
     this.onRemovePressed,
     this.isEnabled = true,
   }) : super(key: key);
 
   final int value;
-  final OnMutation onAddPressed;
-  final OnMutation onRemovePressed;
+  final OnMutation? onAddPressed;
+  final OnMutation? onRemovePressed;
   final bool isEnabled;
 
   @override
@@ -29,16 +29,18 @@ class QuantityPicker extends StatefulWidget {
 class _QuantityPickerState extends State<QuantityPicker> {
   bool _isAdding = false;
   bool _isRemoving = false;
-  int _quantity;
+  int? _quantity;
 
   @override
   void initState() {
     super.initState();
-    if (_quantity == null) _quantity = widget.value;
+    if (_quantity == null) {
+      _quantity = widget.value;
+    }
   }
 
   void setQuantity(int newQuantity) {
-    if (newQuantity != null && newQuantity > 0) {
+    if (newQuantity > 0) {
       setState(() {
         _quantity = newQuantity;
       });
@@ -48,6 +50,9 @@ class _QuantityPickerState extends State<QuantityPicker> {
   @override
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
+
+    final _onRemove = widget.onRemovePressed;
+    final _onAdd = widget.onAddPressed;
 
     return Container(
       width: 85.0,
@@ -78,9 +83,9 @@ class _QuantityPickerState extends State<QuantityPicker> {
             child: InkWell(
               onTap: widget.isEnabled
                   ? () async {
-                      if (widget.onRemovePressed != null) {
+                      if (_onRemove != null) {
                         setState(() => _isRemoving = true);
-                        await widget.onRemovePressed(_quantity, setQuantity);
+                        await _onRemove(_quantity ?? 0, setQuantity);
                         setState(() => _isRemoving = false);
                       }
                     }
@@ -119,9 +124,9 @@ class _QuantityPickerState extends State<QuantityPicker> {
               borderRadius: BorderRadius.circular(4.0),
               onTap: widget.isEnabled
                   ? () async {
-                      if (widget.onAddPressed != null) {
+                      if (_onAdd != null) {
                         setState(() => _isAdding = true);
-                        await widget.onAddPressed(_quantity, setQuantity);
+                        await _onAdd(_quantity ?? 0, setQuantity);
                         setState(() => _isAdding = false);
                       }
                     }

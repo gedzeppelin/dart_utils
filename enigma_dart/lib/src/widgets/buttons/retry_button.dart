@@ -6,14 +6,14 @@ import "common.dart";
 
 class RetryWidget extends StatelessWidget {
   const RetryWidget({
-    Key key,
-    @required this.onTap,
+    Key? key,
+    required this.onTap,
     this.message,
     this.err,
   }) : super(key: key);
 
-  final String message;
-  final Exception err;
+  final String? message;
+  final Exception? err;
   final OnLoaderButtonPressed onTap;
 
   @override
@@ -36,13 +36,12 @@ class RetryWidget extends StatelessWidget {
                     left: 16.0,
                   ),
                   child: Text(
-                    message != null
-                        ? message
-                        : kDebugMode
+                    message ??
+                        (kDebugMode
                             ? err != null
                                 ? err.toString()
                                 : "Ocurrió un error al procesar su operación"
-                            : "Ocurrió un error al procesar su operación, compruebe su conexión a internet",
+                            : "Ocurrió un error al procesar su operación, compruebe su conexión a internet"),
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16.0),
                   ),
