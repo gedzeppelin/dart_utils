@@ -6,21 +6,22 @@ import "package:enigma_dart/src/widgets/buttons/retry_button.dart";
 
 import "util.dart";
 
-typedef PaginatedCallback<T, P extends Paginated<T>> = Future<Response<P>>
-    Function(int nextPage);
+typedef PaginatedCallback<T> = Future<Response<Paginator<T>>> Function(
+    int nextPage);
 
 typedef ItemBuilder<T> = Function(BuildContext context, T item, int idx);
 typedef SeparatorBuilder = Widget Function(BuildContext context, int idx);
-typedef ErrorBuilder<T, P extends Paginated<T>> = Widget Function(
-    Err<P> error, void Function() refresh);
+typedef ErrorBuilder<T> = Widget Function(
+    Err<Paginator<T>> error, void Function() refresh);
 
 enum PaginationViewType { listView, gridView }
 
-class PaginationView<T, P extends Paginated<T>> extends StatefulWidget {
+class PaginationView<T> extends StatefulWidget {
   const PaginationView({
     Key? key,
     required this.itemBuilder,
     required this.pageFetch,
+    this.sliverBefore,
     this.onEmpty = const PaginationEmpty(),
     this.onError,
     this.pageRefresh,
@@ -31,7 +32,7 @@ class PaginationView<T, P extends Paginated<T>> extends StatefulWidget {
     this.preloadedPaginated,
     this.initialLoader = const PaginationFullLoader(),
     this.bottomLoader = const PaginationBottomLoader(),
-    this.paginationViewType = PaginationViewType.listView,
+    this.paginationViewType = PaginationViewType.gridView,
     this.shrinkWrap = false,
     this.reverse = false,
     this.scrollDirection = Axis.vertical,
@@ -41,15 +42,16 @@ class PaginationView<T, P extends Paginated<T>> extends StatefulWidget {
     this.scrollController,
   }) : super(key: key);
 
+  final Widget? sliverBefore;
   final Widget bottomLoader;
   final Widget initialLoader;
   final Widget onEmpty;
   final EdgeInsets padding;
-  final PaginatedCallback<T, P> pageFetch;
-  final PaginatedCallback<T, P>? pageRefresh;
+  final PaginatedCallback<T> pageFetch;
+  final PaginatedCallback<T>? pageRefresh;
   final ScrollPhysics? physics;
   final int initialPage;
-  final P? preloadedPaginated;
+  final Paginator<T>? preloadedPaginated;
   final bool pullToRefresh;
   final bool reverse;
   final Axis scrollDirection;
@@ -59,20 +61,19 @@ class PaginationView<T, P extends Paginated<T>> extends StatefulWidget {
   final ScrollController? scrollController;
 
   @override
-  PaginationViewState<T, P> createState() => PaginationViewState<T, P>();
+  PaginationViewState<T> createState() => PaginationViewState<T>();
 
   final ItemBuilder<T> itemBuilder;
-  final ErrorBuilder<T, P>? onError;
+  final ErrorBuilder<T>? onError;
   final SeparatorBuilder? separatorBuilder;
 }
 
-class PaginationViewState<T, P extends Paginated<T>>
-    extends State<PaginationView<T, P>> {
+class PaginationViewState<T> extends State<PaginationView<T>> {
   late ScrollController _scrollController;
 
   late List<T> _items;
 
-  Response<P>? _currentResponse;
+  Response<Paginator<T>>? _currentResponse;
   late int _nextPage;
   bool _isBottomLoading = false;
 
@@ -84,7 +85,9 @@ class PaginationViewState<T, P extends Paginated<T>>
         !sPosition.outOfRange) {
       final response = _currentResponse;
 
-      if (response != null && response is Ok<P> && response.payload.haveNext) {
+      if (response != null &&
+          response is Ok<Paginator<T>> &&
+          response.payload.haveNext) {
         setState(() {
           _isBottomLoading = true;
         });
@@ -102,7 +105,7 @@ class PaginationViewState<T, P extends Paginated<T>>
 
     //await Future.delayed(Duration(seconds: 2));
 
-    if (response is Ok<P>) {
+    if (response is Ok<Paginator<T>>) {
       _nextPage += 1;
       setState(() {
         _items = _items + response.payload.results;
@@ -194,13 +197,15 @@ class PaginationViewState<T, P extends Paginated<T>>
   }
 
   Widget _makeGridView() {
+    final sliverBefore = widget.sliverBefore;
     return CustomScrollView(
       controller: _scrollController,
       physics: widget.physics,
       reverse: widget.reverse,
       scrollDirection: widget.scrollDirection,
       shrinkWrap: widget.shrinkWrap,
-      slivers: <Widget>[
+      slivers: [
+        if (sliverBefore != null) sliverBefore,
         SliverPadding(
           padding: widget.padding,
           sliver: SliverGrid(
@@ -233,7 +238,7 @@ class PaginationViewState<T, P extends Paginated<T>>
       _currentResponse = response;
     });
 
-    if (response is Ok<P>) {
+    if (response is Ok<Paginator<T>>) {
       _nextPage = 2;
 
       setState(() {

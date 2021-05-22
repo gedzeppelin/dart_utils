@@ -13,7 +13,8 @@ String makePaginatorSuffix(Style style, String inputClass) {
   }
 }
 
-String makePaginatorClass(Style style, String inputClass, String paginatorClass) {
+String makePaginatorClass(
+    Style style, String inputClass, String paginatorClass) {
   switch (style) {
     case Style.enigmapi:
       return makePaginatorEnigmapi(inputClass, paginatorClass);
@@ -27,45 +28,26 @@ String makePaginatorClass(Style style, String inputClass, String paginatorClass)
 }
 
 String makePaginatorDjango(String inputClass, String paginatorClass) => """
-class $paginatorClass extends Paginated<$inputClass>  {
-  const $paginatorClass(
-    int count,
-    this.next,
-    this.previous,
-    List<$inputClass> results,
-  ) : super(results, count);
+Paginator<$inputClass> _\$Pg${inputClass}FromJson(Map<String, dynamic> json) {
+  return Paginator<$inputClass>(
+    json["count"] as int,
+    json["next"] as String?,
+    json["previous"] as String?,
+    (json["results"] as List)
+        .map(
+          (item) => _\$${inputClass}FromJson(item as Map<String, dynamic>),
+        )
+        .toList(),
+  );
+}
 
-  final String next;
-  final String previous;
-
-  @override
-  bool get haveNext => next != null;
-  @override
-  bool get havePrevious => previous != null;
-
-  factory $paginatorClass.fromJson(Map<String, dynamic> json) {
-    return $paginatorClass(
-      json["count"] as int,
-      json["next"] as String,
-      json["previous"] as String,
-      (json["results"] as List)
-          ?.map(
-            (item) => item == null 
-                ? null 
-                : $inputClass.fromJson(item as Map<String, dynamic>),
-          )
-          ?.toList(),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      "count": this.totalCount,
-      "next": this.next,
-      "previous": this.previous,
-      "results": this.results?.map((e) => e?.toJson())?.toList(),
-    }; 
-  }
+Map<String, dynamic> _\$Pg${inputClass}ToJson(Paginator<$inputClass> instance) {
+  return <String, dynamic>{
+    "count": instance.count,
+    "next": instance.next,
+    "previous": instance.previous,
+    "results": instance.results.map((e) => _\$${inputClass}ToJson).toList(),
+  }; 
 }
 """;
 

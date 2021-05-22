@@ -4,7 +4,7 @@ import "package:http/http.dart";
 class ResponseDefaults {
   int attempts = 3;
   Client client = Client();
-  NotifyKinds notifyKind = NotifyKinds.ifErr;
+  NotifyKind notifyKind = NotifyKind.ifErr;
   NotifyType notifyType = NotifyType.success;
 
   String Function() successLabel = () => "Success";

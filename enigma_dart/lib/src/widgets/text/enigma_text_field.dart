@@ -1,18 +1,17 @@
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 
-import "package:enigma_core/enigma_core.dart";
-
 typedef void OnSubmit(String value, FocusNode focusNode);
 typedef void OnFocusChange(bool hasFocus);
 typedef String? Validator(String? value);
 
-class EnigmaTextField extends StatefulWidget {
+class EgTextField extends StatefulWidget {
   static const String emailRegex =
       r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+";
 
-  EnigmaTextField({
+  EgTextField({
     Key? key,
+    this.initialized = false,
     this.controller,
     this.focusNode,
     this.formatters,
@@ -20,7 +19,7 @@ class EnigmaTextField extends StatefulWidget {
     this.initialValue,
     this.inputAction,
     this.inputType,
-    this.isPassword = false,
+    this.password = false,
     this.label,
     this.margin,
     this.maxLength,
@@ -34,6 +33,7 @@ class EnigmaTextField extends StatefulWidget {
   static const String emailValidationMessage = "Correo inválido";
   static const String emptyValidationMessage = "Campo obligatorio";
 
+  final bool initialized;
   final EdgeInsets? margin;
   final FocusNode? focusNode;
   final FocusNode? nextNode;
@@ -48,14 +48,15 @@ class EnigmaTextField extends StatefulWidget {
   final TextInputAction? inputAction;
   final TextInputType? inputType;
   final Validator? validator;
-  final bool isPassword;
+  final bool password;
   final int? maxLength;
 
   @override
-  _EnigmaTextFieldState createState() => _EnigmaTextFieldState();
+  _EgTextFieldState createState() => _EgTextFieldState();
 
-  EnigmaTextField copyWith({
+  EgTextField copyWith({
     Key? key,
+    final bool? initialized,
     final EdgeInsets? margin,
     final FocusNode? focusNode,
     final FocusNode? nextNode,
@@ -73,7 +74,9 @@ class EnigmaTextField extends StatefulWidget {
     final bool? isPassword,
     final int? maxLength,
   }) {
-    return EnigmaTextField(
+    return EgTextField(
+      key: key ?? this.key,
+      initialized: initialized ?? this.initialized,
       controller: controller ?? this.controller,
       focusNode: focusNode ?? this.focusNode,
       formatters: formatters ?? this.formatters,
@@ -81,8 +84,7 @@ class EnigmaTextField extends StatefulWidget {
       initialValue: initialValue ?? this.initialValue,
       inputAction: inputAction ?? this.inputAction,
       inputType: inputType ?? this.inputType,
-      isPassword: isPassword ?? this.isPassword,
-      key: key ?? this.key,
+      password: isPassword ?? this.password,
       label: label ?? this.label,
       margin: margin ?? this.margin,
       maxLength: maxLength ?? this.maxLength,
@@ -109,8 +111,15 @@ class EnigmaTextField extends StatefulWidget {
   }
 }
 
-class _EnigmaTextFieldState extends State<EnigmaTextField> {
+class _EgTextFieldState extends State<EgTextField> {
+  final _formFieldKey = GlobalKey<FormFieldState>();
   bool _obscuredState = true;
+
+  void _onChange(String _) {
+    if (widget.initialized) {
+      _formFieldKey.currentState?.validate();
+    }
+  }
 
   @override
   void initState() {
@@ -131,76 +140,74 @@ class _EnigmaTextFieldState extends State<EnigmaTextField> {
 
   @override
   Widget build(BuildContext context) {
-    TextFormField textField;
-
     final _onSubmit = widget.onSubmit;
     final _focusNode = widget.focusNode;
     final _nextNode = widget.nextNode;
 
-    if (widget.isPassword) {
-      textField = TextFormField(
-        focusNode: widget.focusNode,
-        controller: widget.controller,
-        keyboardType: widget.inputType,
-        maxLength: widget.maxLength,
-        inputFormatters: widget.formatters,
-        validator: widget.validator ?? EnigmaTextField.emptyValidator,
-        textInputAction: widget.inputAction != null
-            ? widget.inputAction
-            : widget.onSubmit != null
-                ? TextInputAction.done
-                : TextInputAction.next,
-        obscureText: _obscuredState,
-        decoration: InputDecoration(
-          border: OutlineInputBorder(),
-          labelText: widget.label,
-          hintText: widget.hint,
-          suffixIcon: IconButton(
-            icon: Icon(
-              _obscuredState ? Icons.visibility : Icons.visibility_off,
-            ),
-            onPressed: () => setState(() {
-              _obscuredState = !_obscuredState;
-            }),
-          ),
-        ),
-        textCapitalization: widget.textCapitalization,
-        onFieldSubmitted: _onSubmit != null && _focusNode != null
-            ? (String v) => _onSubmit(v, _focusNode)
-            : (_) => _nextNode != null
-                ? _nextNode.requestFocus()
-                : FocusScope.of(context).nextFocus(),
-      );
-    } else {
-      textField = TextFormField(
-        focusNode: widget.focusNode,
-        controller: widget.controller,
-        keyboardType: widget.inputType,
-        maxLength: widget.maxLength,
-        inputFormatters: widget.formatters,
-        validator: widget.validator ?? EnigmaTextField.emptyValidator,
-        textInputAction: widget.inputAction != null
-            ? widget.inputAction
-            : widget.onSubmit != null
-                ? TextInputAction.done
-                : TextInputAction.next,
-        decoration: InputDecoration(
-          border: OutlineInputBorder(),
-          labelText: widget.label,
-          hintText: widget.hint,
-        ),
-        textCapitalization: widget.textCapitalization,
-        onFieldSubmitted: _onSubmit != null && _focusNode != null
-            ? (String v) => _onSubmit(v, _focusNode)
-            : (_) => _nextNode != null
-                ? _nextNode.requestFocus()
-                : FocusScope.of(context).nextFocus(),
-      );
-    }
-
     return Container(
       margin: widget.margin ?? EdgeInsets.symmetric(vertical: 8.0),
-      child: textField,
+      child: widget.password
+          ? TextFormField(
+              key: _formFieldKey,
+              onChanged: _onChange,
+              focusNode: widget.focusNode,
+              controller: widget.controller,
+              keyboardType: widget.inputType,
+              maxLength: widget.maxLength,
+              inputFormatters: widget.formatters,
+              validator: widget.validator ?? EgTextField.emptyValidator,
+              textInputAction: widget.inputAction != null
+                  ? widget.inputAction
+                  : widget.onSubmit != null
+                      ? TextInputAction.done
+                      : TextInputAction.next,
+              obscureText: _obscuredState,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: widget.label,
+                hintText: widget.hint,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscuredState ? Icons.visibility : Icons.visibility_off,
+                  ),
+                  onPressed: () => setState(() {
+                    _obscuredState = !_obscuredState;
+                  }),
+                ),
+              ),
+              textCapitalization: widget.textCapitalization,
+              onFieldSubmitted: _onSubmit != null && _focusNode != null
+                  ? (String v) => _onSubmit(v, _focusNode)
+                  : (_) => _nextNode != null
+                      ? _nextNode.requestFocus()
+                      : FocusScope.of(context).nextFocus(),
+            )
+          : TextFormField(
+              key: _formFieldKey,
+              onChanged: _onChange,
+              focusNode: widget.focusNode,
+              controller: widget.controller,
+              keyboardType: widget.inputType,
+              maxLength: widget.maxLength,
+              inputFormatters: widget.formatters,
+              validator: widget.validator ?? EgTextField.emptyValidator,
+              textInputAction: widget.inputAction != null
+                  ? widget.inputAction
+                  : widget.onSubmit != null
+                      ? TextInputAction.done
+                      : TextInputAction.next,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: widget.label,
+                hintText: widget.hint,
+              ),
+              textCapitalization: widget.textCapitalization,
+              onFieldSubmitted: _onSubmit != null && _focusNode != null
+                  ? (String v) => _onSubmit(v, _focusNode)
+                  : (_) => _nextNode != null
+                      ? _nextNode.requestFocus()
+                      : FocusScope.of(context).nextFocus(),
+            ),
     );
   }
 }

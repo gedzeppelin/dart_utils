@@ -1,11 +1,13 @@
-abstract class Paginated<T> {
-  const Paginated(this.results, this.totalCount);
+class Paginator<T> {
+  const Paginator(this.count, this.next, this.previous, this.results);
 
+  final int count;
+  final String? next;
+  final String? previous;
   final List<T> results;
-  final int totalCount;
 
-  bool get havePrevious;
-  bool get haveNext;
+  bool get haveNext => next != null;
+  bool get havePrevious => previous != null;
 
   bool get isEmpty => results.length <= 0;
   bool get isNotEmpty => results.length > 0;

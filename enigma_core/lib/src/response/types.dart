@@ -1,7 +1,7 @@
 part of "response.dart";
 
-enum NotifyType { success, error, warning }
-enum NotifyKinds { always, never, ifOk, ifErr }
+enum NotifyType { success, error, warning, normal }
+enum NotifyKind { always, never, ifOk, ifErr }
 
 typedef Deserializer<T> = T Function(Map<String, dynamic> decodedBody);
 
@@ -19,9 +19,10 @@ class ErrInfo {
 }
 
 class Notifier {
+  void Function(String msg) normal;
   void Function(String msg) success;
   void Function(String msg) error;
   void Function(String msg) warn;
 
-  Notifier(this.success, this.error, this.warn);
+  Notifier(this.normal, this.success, this.error, this.warn);
 }

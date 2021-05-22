@@ -1,7 +1,11 @@
+import 'package:enigma_dart/src/theme/theme.dart';
 import "package:flutter/material.dart";
 
 typedef CardBuilder = Widget Function(
-    BuildContext context, Radius borderRadius);
+  BuildContext context,
+  Radius borderRadius,
+  Color borderColor,
+);
 
 class ModernCard extends StatelessWidget {
   const ModernCard({
@@ -13,7 +17,7 @@ class ModernCard extends StatelessWidget {
     this.onTap,
     required this.builder,
     // Border.
-    this.borderColor = Colors.black,
+    this.borderColor,
     this.borderRadius = 8.0,
     this.borderWidth = 2.0,
     // Shadow.
@@ -30,7 +34,7 @@ class ModernCard extends StatelessWidget {
   final CardBuilder builder;
 
   // Border properties.
-  final Color borderColor;
+  final Color? borderColor;
   final double borderRadius;
   final double borderWidth;
 
@@ -40,6 +44,9 @@ class ModernCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final light = isLight(context);
+    final _borderColor = borderColor ?? (light ? Colors.black : Colors.white);
+
     return Container(
       margin: margin,
       height: height,
@@ -59,7 +66,7 @@ class ModernCard extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           side: BorderSide(
-            color: borderColor,
+            color: _borderColor,
             width: borderWidth,
           ),
         ),
@@ -72,6 +79,7 @@ class ModernCard extends StatelessWidget {
               builder: (context) => builder(
                 context,
                 Radius.circular(borderRadius),
+                _borderColor,
               ),
             ),
           ),

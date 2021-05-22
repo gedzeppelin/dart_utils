@@ -1,9 +1,12 @@
-import "dart:convert" show json, utf8;
+import "dart:convert" show Encoding, json, utf8;
 
-import 'package:enigma_core/enigma_core.dart';
+import 'package:enigma_annotation/enigma_annotation.dart';
+import "package:enigma_core/enigma_core.dart";
 import "package:http/http.dart" as http;
 
-part "response_ext.dart";
+part "make_any.dart";
+part "make_object.dart";
+part "make_paginator.dart";
 part "types.dart";
 
 // ANCHOR Exception messages and extensions.
@@ -34,7 +37,7 @@ abstract class Response<T> {
     Uri? requestURL,
     int? status,
     String? message,
-    NotifyKinds? notifyKind,
+    NotifyKind? notifyKind,
   }) = Ok<T>;
 
   factory Response.err({
@@ -42,13 +45,13 @@ abstract class Response<T> {
     Uri? requestURL,
     int? status,
     String? message,
-    NotifyKinds? notifyKind,
+    NotifyKind? notifyKind,
   }) = Err<T>;
 
   bool get isOk => this is Ok<T>;
   bool get isErr => this is Err<T>;
 
-  void notify([NotifyKinds? kind, Notifier? notifier]);
+  void notify([NotifyKind? kind, Notifier? notifier]);
   void fold({
     IfOkFold<T>? ifOk,
     IfErrFold<T>? ifErr,
@@ -69,17 +72,17 @@ class Ok<T> extends Response<T> {
     Uri? requestURL,
     int? status,
     String? message,
-    NotifyKinds? notifyKind,
+    NotifyKind? notifyKind,
   }) : super._internal(requestURL, status, message) {
     this.notify(notifyKind);
   }
 
   @override
-  void notify([NotifyKinds? kind, Notifier? notifier]) {
+  void notify([NotifyKind? kind, Notifier? notifier]) {
     final _notifier = notifier ?? options.notifier;
     if (_notifier != null) {
       final _kind = kind ?? options.response.notifyKind;
-      if (_kind == NotifyKinds.ifErr || _kind == NotifyKinds.always) {
+      if (_kind == NotifyKind.ifOk || _kind == NotifyKind.always) {
         final _message = message ?? options.response.successMessage();
         _notifier.success("${options.response.successLabel()}:\n${_message}");
       }
@@ -104,15 +107,15 @@ class Ok<T> extends Response<T> {
 // ANCHOR Err variants.
 
 class Err<T> extends Response<T> implements Exception {
-  late final String? _error;
-  late final List<ErrInfo>? _messages;
+  String? _error = null;
+  List<ErrInfo>? _messages = null;
 
   Err({
     dynamic payload,
     Uri? requestURL,
     int? status,
     String? message,
-    NotifyKinds? notifyKind,
+    NotifyKind? notifyKind,
   }) : super._internal(requestURL, status, message) {
     if (payload is Map<String, dynamic>) {
       final error = payload["error"];
@@ -163,8 +166,8 @@ class Err<T> extends Response<T> implements Exception {
     final _messages = this._messages;
     if (_messages != null && _messages.length > 0) {
       return _messages.map((x) {
-        final propErrors = x.errors.map((y) => y.toString()).join(", ");
-        return "- ${x}: ${propErrors}";
+        final propErrors = x.errors.map((y) => y.toString()).join("\n");
+        return "- ${x.property}:\n${propErrors}";
       }).join("\n");
     }
 
@@ -174,11 +177,11 @@ class Err<T> extends Response<T> implements Exception {
   //Err<A> toType<A>();
 
   @override
-  void notify([NotifyKinds? kind, Notifier? notifier]) {
+  void notify([NotifyKind? kind, Notifier? notifier]) {
     final _notifier = notifier ?? options.notifier;
     if (_notifier != null) {
       final _kind = kind ?? options.response.notifyKind;
-      if (_kind == NotifyKinds.ifErr || _kind == NotifyKinds.always) {
+      if (_kind == NotifyKind.ifErr || _kind == NotifyKind.always) {
         _notifier.error("${options.response.errorLabel()}:\n${getError()}");
       }
     }
