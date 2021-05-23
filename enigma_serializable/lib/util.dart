@@ -1,12 +1,12 @@
 import "package:enigma_annotation/enigma_annotation.dart";
 
-String makePaginatorSuffix(Style style, String inputClass) {
+String makePaginatorSuffix(PaginationStyle style, String inputClass) {
   switch (style) {
-    case Style.enigmapi:
+    case PaginationStyle.enigmapi:
       return "${inputClass}PaginatorEnigmapi";
-    case Style.django:
+    case PaginationStyle.django:
       return "${inputClass}PaginatorDjango";
-    case Style.nest:
+    case PaginationStyle.nest:
       return "${inputClass}PaginatorNest";
     default:
       throw Error();
@@ -14,13 +14,13 @@ String makePaginatorSuffix(Style style, String inputClass) {
 }
 
 String makePaginatorClass(
-    Style style, String inputClass, String paginatorClass) {
+    PaginationStyle style, String inputClass, String paginatorClass) {
   switch (style) {
-    case Style.enigmapi:
+    case PaginationStyle.enigmapi:
       return makePaginatorEnigmapi(inputClass, paginatorClass);
-    case Style.django:
+    case PaginationStyle.django:
       return makePaginatorDjango(inputClass, paginatorClass);
-    case Style.nest:
+    case PaginationStyle.nest:
       return makePaginatorNest(inputClass, paginatorClass);
     default:
       throw Error();

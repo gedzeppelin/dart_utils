@@ -15,7 +15,7 @@ class PaginationGenerator extends GeneratorForAnnotation<JsonPagination> {
     BuildStep buildStep,
   ) {
     final styles = annotation.read("styles").listValue.map(
-          (object) => Style.values.firstWhere(
+          (object) => PaginationStyle.values.firstWhere(
             (backend) {
               final backendString = backend.toString().split(".")[1];
               return object.getField(backendString) != null;

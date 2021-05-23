@@ -1,4 +1,4 @@
-enum Style {
+enum PaginationStyle {
   django,
   enigmapi,
   nest,
@@ -6,8 +6,8 @@ enum Style {
 
 class JsonPagination {
   const JsonPagination({
-    this.styles = const <Style>[Style.enigmapi],
+    this.styles = const <PaginationStyle>[PaginationStyle.django],
   });
 
-  final List<Style> styles;
+  final List<PaginationStyle> styles;
 }
