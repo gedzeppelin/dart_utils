@@ -1,9 +1,9 @@
 import "package:enigma_core/src/response/response.dart";
-import "package:http/http.dart";
+import "package:dio/dio.dart";
 
 class ResponseDefaults {
   int attempts = 3;
-  Client client = Client();
+  Dio client = Dio();
   NotifyKind notifyKind = NotifyKind.ifErr;
   NotifyType notifyType = NotifyType.success;
 

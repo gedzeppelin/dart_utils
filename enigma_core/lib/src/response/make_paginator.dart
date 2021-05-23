@@ -2,21 +2,30 @@ part of "response.dart";
 
 /// Builds a [Response] with HTTP"s response status code comparison.
 Future<Response<Paginator<T>>> getPaginator<T>({
-  required Uri url,
-  Map<String, String>? headers,
+  required String url,
   required Deserializer<Paginator<T>> deserializer,
+  Options? options,
+  Map<String, dynamic>? queryParameters,
+  Object? body,
   int? attempts,
   IfOkFold<Paginator<T>>? ifOk,
   IfErrFold<Paginator<T>>? ifErr,
+  OnFinally<Paginator<T>>? onFinally,
   NotifyKind? notify,
   String? message,
 }) async {
-  final request = options.response.client.get(url, headers: headers);
+  options ??= Options();
+  options.method = "POST";
+
+  final request = options.compose(defaults.response.client.options, url,
+      options: options, queryParameters: queryParameters, data: body);
 
   final response =
-      await _makeObject(request, url, deserializer, attempts, notify, message);
+      await _makeObject(request, deserializer, attempts, notify, message);
 
   response.fold(ifOk: ifOk, ifErr: ifErr);
+  onFinally?.call(response);
+
   return response;
 }
 /* 

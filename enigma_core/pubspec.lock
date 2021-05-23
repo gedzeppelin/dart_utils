@@ -71,13 +71,20 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.1"
+  dio:
+    dependency: "direct main"
+    description:
+      name: dio
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "4.0.0"
   enigma_annotation:
     dependency: "direct main"
     description:
       path: "../enigma_annotation"
       relative: true
     source: path
-    version: "0.0.1"
+    version: "0.1.0"
   fake_async:
     dependency: transitive
     description:
@@ -100,13 +107,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  http:
-    dependency: "direct main"
-    description:
-      name: http
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.13.3"
   http_parser:
     dependency: transitive
     description:
@@ -142,13 +142,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.8.0"
-  pedantic:
-    dependency: transitive
-    description:
-      name: pedantic
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.11.0"
   plugin_platform_interface:
     dependency: transitive
     description:

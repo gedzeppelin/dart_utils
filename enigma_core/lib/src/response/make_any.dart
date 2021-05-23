@@ -1,37 +1,36 @@
 part of "response.dart";
 
 Future<Response> _makeAny(
-  Future<http.Response> httpRequest,
-  Uri url,
+  RequestOptions request,
   int? attempts,
   NotifyKind? notify,
   String? message,
 ) async {
-  final _attempts = attempts ?? options.response.attempts;
+  final _attempts = attempts ?? defaults.response.attempts;
 
   for (var i = 0; i < _attempts; i++) {
     try {
-      final httpResponse = await httpRequest;
+      final dioResponse = await defaults.response.client.fetch(request);
 
-      if (httpResponse.isSuccessful) {
-        final stringBody = utf8.decode(httpResponse.bodyBytes);
+      if (dioResponse.isSuccessful) {
+        final stringBody = utf8.decode(dioResponse.data);
         final body = json.decode(stringBody);
 
         return Ok(
           payload: body,
-          requestURL: httpResponse.request?.url,
-          status: httpResponse.statusCode,
+          requestURL: dioResponse.realUri,
+          status: dioResponse.statusCode,
           notifyKind: notify,
           message: message,
         );
       } else if (i + 1 == _attempts) {
-        final stringBody = utf8.decode(httpResponse.bodyBytes);
+        final stringBody = utf8.decode(dioResponse.data);
         final body = json.decode(stringBody);
 
         return Err(
           payload: body,
-          requestURL: httpResponse.request?.url,
-          status: httpResponse.statusCode,
+          requestURL: dioResponse.realUri,
+          status: dioResponse.statusCode,
           notifyKind: notify,
           message: message,
         );
@@ -40,7 +39,7 @@ Future<Response> _makeAny(
       if (i + 1 == _attempts) {
         return Err(
           payload: err,
-          requestURL: url,
+          requestURL: request.uri,
           notifyKind: notify,
           message: message,
         );
@@ -55,114 +54,130 @@ Future<Response> _makeAny(
 }
 
 Future<Response> getAny({
-  required Uri url,
-  Map<String, String>? headers,
+  required String url,
+  Options? options,
+  Map<String, dynamic>? queryParameters,
   int? attempts,
   IfOkFold? ifOk,
   IfErrFold? ifErr,
+  OnFinally? onFinally,
   NotifyKind? notify,
   String? message,
 }) async {
-  final request = options.response.client.get(url, headers: headers);
+  options ??= Options();
+  options.method = "GET";
 
-  final response = await _makeAny(request, url, attempts, notify, message);
+  final request = options.compose(defaults.response.client.options, url,
+      options: options, queryParameters: queryParameters);
+
+  final response = await _makeAny(request, attempts, notify, message);
 
   response.fold(ifOk: ifOk, ifErr: ifErr);
+  onFinally?.call(response);
+
   return response;
 }
 
 Future<Response> postAny({
-  required Uri url,
-  Map<String, String>? headers,
+  required String url,
+  Options? options,
+  Map<String, dynamic>? queryParameters,
   Object? body,
-  Encoding? encoding,
   int? attempts,
   IfOkFold? ifOk,
   IfErrFold? ifErr,
+  OnFinally? onFinally,
   NotifyKind? notify,
   String? message,
 }) async {
-  final request = options.response.client.post(
-    url,
-    headers: headers,
-    body: body,
-    encoding: encoding,
-  );
+  options ??= Options();
+  options.method = "POST";
 
-  final response = await _makeAny(request, url, attempts, notify, message);
+  final request = options.compose(defaults.response.client.options, url,
+      options: options, queryParameters: queryParameters, data: body);
+
+  final response = await _makeAny(request, attempts, notify, message);
 
   response.fold(ifOk: ifOk, ifErr: ifErr);
+  onFinally?.call(response);
+
   return response;
 }
 
 Future<Response> putAny({
-  required Uri url,
-  Map<String, String>? headers,
+  required String url,
+  Options? options,
+  Map<String, dynamic>? queryParameters,
   Object? body,
-  Encoding? encoding,
   int? attempts,
   IfOkFold? ifOk,
   IfErrFold? ifErr,
+  OnFinally? onFinally,
   NotifyKind? notify,
   String? message,
 }) async {
-  final request = options.response.client.put(
-    url,
-    headers: headers,
-    body: body,
-    encoding: encoding,
-  );
+  options ??= Options();
+  options.method = "PUT";
 
-  final response = await _makeAny(request, url, attempts, notify, message);
+  final request = options.compose(defaults.response.client.options, url,
+      options: options, queryParameters: queryParameters, data: body);
+
+  final response = await _makeAny(request, attempts, notify, message);
 
   response.fold(ifOk: ifOk, ifErr: ifErr);
+  onFinally?.call(response);
+
   return response;
 }
 
 Future<Response> patchAny({
-  required Uri url,
-  Map<String, String>? headers,
+  required String url,
+  Options? options,
+  Map<String, dynamic>? queryParameters,
   Object? body,
-  Encoding? encoding,
   int? attempts,
   IfOkFold? ifOk,
   IfErrFold? ifErr,
+  OnFinally? onFinally,
   NotifyKind? notify,
   String? message,
 }) async {
-  final request = options.response.client.patch(
-    url,
-    headers: headers,
-    body: body,
-    encoding: encoding,
-  );
+  options ??= Options();
+  options.method = "PATCH";
 
-  final response = await _makeAny(request, url, attempts, notify, message);
+  final request = options.compose(defaults.response.client.options, url,
+      options: options, queryParameters: queryParameters, data: body);
+
+  final response = await _makeAny(request, attempts, notify, message);
 
   response.fold(ifOk: ifOk, ifErr: ifErr);
+  onFinally?.call(response);
+
   return response;
 }
 
 Future<Response> deleteAny({
-  required Uri url,
-  Map<String, String>? headers,
+  required String url,
+  Options? options,
+  Map<String, dynamic>? queryParameters,
   Object? body,
-  Encoding? encoding,
   int? attempts,
   IfOkFold? ifOk,
   IfErrFold? ifErr,
+  OnFinally? onFinally,
   NotifyKind? notify,
   String? message,
 }) async {
-  final request = options.response.client.delete(
-    url,
-    headers: headers,
-    body: body,
-    encoding: encoding,
-  );
+  options ??= Options();
+  options.method = "DELETE";
 
-  final response = await _makeAny(request, url, attempts, notify, message);
+  final request = options.compose(defaults.response.client.options, url,
+      options: options, queryParameters: queryParameters, data: body);
+
+  final response = await _makeAny(request, attempts, notify, message);
 
   response.fold(ifOk: ifOk, ifErr: ifErr);
+  onFinally?.call(response);
+
   return response;
 }

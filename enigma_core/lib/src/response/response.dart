@@ -1,8 +1,9 @@
-import "dart:convert" show Encoding, json, utf8;
+import "dart:convert" show json, utf8;
 
+import 'package:dio/dio.dart';
 import 'package:enigma_annotation/enigma_annotation.dart';
 import "package:enigma_core/enigma_core.dart";
-import "package:http/http.dart" as http;
+import "package:dio/dio.dart" as dio;
 
 part "make_any.dart";
 part "make_object.dart";
@@ -11,12 +12,9 @@ part "types.dart";
 
 // ANCHOR Exception messages and extensions.
 
-extension IsResponseSuccessful on http.Response {
-  bool get isSuccessful => statusCode > 199 && statusCode < 300;
-}
-
-extension IsStreamedResponseSuccessful on http.StreamedResponse {
-  bool get isSuccessful => statusCode > 199 && statusCode < 300;
+extension IsResponseSuccessful on dio.Response {
+  bool get isSuccessful =>
+      statusCode != null && statusCode! > 199 && statusCode! < 300;
 }
 
 // ANCHOR Response declaration.
@@ -79,12 +77,12 @@ class Ok<T> extends Response<T> {
 
   @override
   void notify([NotifyKind? kind, Notifier? notifier]) {
-    final _notifier = notifier ?? options.notifier;
+    final _notifier = notifier ?? defaults.notifier;
     if (_notifier != null) {
-      final _kind = kind ?? options.response.notifyKind;
+      final _kind = kind ?? defaults.response.notifyKind;
       if (_kind == NotifyKind.ifOk || _kind == NotifyKind.always) {
-        final _message = message ?? options.response.successMessage();
-        _notifier.success("${options.response.successLabel()}:\n${_message}");
+        final _message = message ?? defaults.response.successMessage();
+        _notifier.success("${defaults.response.successLabel()}:\n${_message}");
       }
     }
   }
@@ -171,18 +169,18 @@ class Err<T> extends Response<T> implements Exception {
       }).join("\n");
     }
 
-    return options.response.errorMessage();
+    return defaults.response.errorMessage();
   }
 
   //Err<A> toType<A>();
 
   @override
   void notify([NotifyKind? kind, Notifier? notifier]) {
-    final _notifier = notifier ?? options.notifier;
+    final _notifier = notifier ?? defaults.notifier;
     if (_notifier != null) {
-      final _kind = kind ?? options.response.notifyKind;
+      final _kind = kind ?? defaults.response.notifyKind;
       if (_kind == NotifyKind.ifErr || _kind == NotifyKind.always) {
-        _notifier.error("${options.response.errorLabel()}:\n${getError()}");
+        _notifier.error("${defaults.response.errorLabel()}:\n${getError()}");
       }
     }
   }

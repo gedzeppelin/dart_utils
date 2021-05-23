@@ -11,6 +11,8 @@ typedef IfErrFold<T> = void Function(Err<T> err);
 typedef IfOkMap<T, R> = R Function(Ok<T> ok);
 typedef IfErrMap<T, R> = R Function(Err<T> err);
 
+typedef OnFinally<T> = void Function(Response<T> res);
+
 class ErrInfo {
   final String property;
   final List<dynamic> errors;

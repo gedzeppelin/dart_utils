@@ -11,7 +11,7 @@ export "src/response/response.dart";
 
 export "src/util.dart";
 
-final options = EgOptions._internal();
+final defaults = EgOptions._internal();
 
 class EgOptions {
   EgOptions._internal();
@@ -21,6 +21,6 @@ class EgOptions {
   Notifier? notifier;
 
   factory EgOptions() {
-    return options;
+    return defaults;
   }
 }

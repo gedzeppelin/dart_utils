@@ -24,11 +24,9 @@ RetryWidget makeRetryWidget<T>(FutureCallback<T> retry, Err<T> failed) {
 
 extension FutureWidgetUtil<T> on Future<Response<T>> {
   Future<Response<T>> attachOnSuccess(OnResolve<T> onResolve) {
-    if (onResolve != null) {
-      this.then((Response<T> resolved) {
-        if (resolved is Ok<T>) onResolve(resolved.payload);
-      });
-    }
+    this.then((Response<T> resolved) {
+      if (resolved is Ok<T>) onResolve(resolved.payload);
+    });
 
     return this;
   }
