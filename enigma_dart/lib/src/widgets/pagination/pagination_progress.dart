@@ -6,8 +6,8 @@ import "package:enigma_dart/src/widgets/buttons/retry_button.dart";
 
 import "util.dart";
 
-typedef PaginatedCallback<T> = Future<Response<Paginator<T>>> Function(
-    int nextPage);
+typedef PaginatorCallback<T> = Future<Response<Paginator<T>>> Function(
+    int page);
 
 typedef ItemBuilder<T> = Function(BuildContext context, T item, int idx);
 typedef SeparatorBuilder = Widget Function(BuildContext context, int idx);
@@ -28,8 +28,8 @@ class PaginationView<T> extends StatefulWidget {
     this.pullToRefresh = true,
     this.gridDelegate =
         const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
-    this.initialPage = 1,
-    this.preloadedPaginated,
+    this.initialPage,
+    this.initialPayload,
     this.initialLoader = const PaginationFullLoader(),
     this.bottomLoader = const PaginationBottomLoader(),
     this.paginationViewType = PaginationViewType.gridView,
@@ -37,7 +37,7 @@ class PaginationView<T> extends StatefulWidget {
     this.reverse = false,
     this.scrollDirection = Axis.vertical,
     this.padding = const EdgeInsets.all(0.0),
-    this.physics,
+    this.physics = const AlwaysScrollableScrollPhysics(),
     this.separatorBuilder,
     this.scrollController,
   }) : super(key: key);
@@ -47,11 +47,11 @@ class PaginationView<T> extends StatefulWidget {
   final Widget initialLoader;
   final Widget onEmpty;
   final EdgeInsets padding;
-  final PaginatedCallback<T> pageFetch;
-  final PaginatedCallback<T>? pageRefresh;
+  final PaginatorCallback<T> pageFetch;
+  final PaginatorCallback<T>? pageRefresh;
   final ScrollPhysics? physics;
-  final int initialPage;
-  final Paginator<T>? preloadedPaginated;
+  final int? initialPage;
+  final Paginator<T>? initialPayload;
   final bool pullToRefresh;
   final bool reverse;
   final Axis scrollDirection;
@@ -71,16 +71,37 @@ class PaginationView<T> extends StatefulWidget {
 class PaginationViewState<T> extends State<PaginationView<T>> {
   late ScrollController _scrollController;
 
-  late List<T> _items;
+  List<T> _items = [];
+  int _nextPage = 1;
 
   Response<Paginator<T>>? _currentResponse;
-  late int _nextPage;
-  bool _isBottomLoading = false;
+
+  bool _bottomLoading = false;
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = widget.scrollController ?? ScrollController();
+    _scrollController.addListener(_scrollListener);
+
+    if (widget.initialPage != null) {
+      _nextPage = widget.initialPage!;
+    }
+
+    if (widget.initialPayload != null) {
+      _currentResponse = Ok(payload: widget.initialPayload!);
+      _items = widget.initialPayload!.results;
+      _initialized = true;
+    } else {
+      _fetchPage();
+    }
+  }
 
   _scrollListener() {
     final sPosition = _scrollController.position;
 
-    if (!_isBottomLoading &&
+    if (!_bottomLoading &&
         _scrollController.offset >= sPosition.maxScrollExtent - 25 &&
         !sPosition.outOfRange) {
       final response = _currentResponse;
@@ -89,15 +110,16 @@ class PaginationViewState<T> extends State<PaginationView<T>> {
           response is Ok<Paginator<T>> &&
           response.payload.haveNext) {
         setState(() {
-          _isBottomLoading = true;
+          _bottomLoading = true;
         });
         _fetchPage();
       }
     }
   }
 
-  void _fetchPage() async {
-    final response = await widget.pageFetch(_nextPage);
+  void _fetchPage([int? nextPage, bool reload = false]) async {
+    final page = nextPage ?? _nextPage;
+    final response = await widget.pageFetch(page);
 
     setState(() {
       _currentResponse = response;
@@ -106,30 +128,20 @@ class PaginationViewState<T> extends State<PaginationView<T>> {
     //await Future.delayed(Duration(seconds: 2));
 
     if (response is Ok<Paginator<T>>) {
-      _nextPage += 1;
+      _initialized = true;
+      _nextPage = page + 1;
+
       setState(() {
-        _items = _items + response.payload.results;
-        _isBottomLoading = false;
+        _items = reload
+            ? response.payload.results
+            : _items + response.payload.results;
+        _bottomLoading = false;
       });
-    }
-  }
 
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = widget.scrollController ?? ScrollController();
-    _scrollController.addListener(_scrollListener);
-
-    final _currentPayload = widget.preloadedPaginated;
-    if (_currentPayload != null) {
-      _currentResponse = Ok(payload: _currentPayload);
+      if (reload && _scrollController.hasClients) {
+        _scrollController.jumpTo(0);
+      }
     }
-    _nextPage = widget.initialPage;
-    if (_currentResponse == null) {
-      _fetchPage();
-    }
-
-    _items = widget.preloadedPaginated?.results ?? <T>[];
   }
 
   @override
@@ -140,7 +152,7 @@ class PaginationViewState<T> extends State<PaginationView<T>> {
       return widget.initialLoader;
     }
 
-    if (_items.isEmpty) {
+    if (widget.sliverBefore == null && _items.isEmpty) {
       return widget.onEmpty;
     }
 
@@ -149,7 +161,7 @@ class PaginationViewState<T> extends State<PaginationView<T>> {
         if (widget.paginationViewType == PaginationViewType.gridView) {
           if (widget.pullToRefresh) {
             return RefreshIndicator(
-              onRefresh: () async => refresh(),
+              onRefresh: refresh,
               child: _makeGridView(),
             );
           }
@@ -158,7 +170,7 @@ class PaginationViewState<T> extends State<PaginationView<T>> {
 
         if (widget.pullToRefresh) {
           return RefreshIndicator(
-            onRefresh: () async => refresh(),
+            onRefresh: refresh,
             child: _makeListView(),
           );
         }
@@ -185,7 +197,7 @@ class PaginationViewState<T> extends State<PaginationView<T>> {
       scrollDirection: widget.scrollDirection,
       shrinkWrap: widget.shrinkWrap,
       separatorBuilder: widget.separatorBuilder ?? (c, i) => SizedBox.shrink(),
-      itemCount: _isBottomLoading ? _items.length + 1 : _items.length,
+      itemCount: _bottomLoading ? _items.length + 1 : _items.length,
       itemBuilder: (context, idx) {
         if (idx >= _items.length) {
           return const PaginationBottomLoader();
@@ -220,7 +232,7 @@ class PaginationViewState<T> extends State<PaginationView<T>> {
           delegate: SliverChildListDelegate([
             Visibility(
               child: widget.bottomLoader,
-              visible: _isBottomLoading,
+              visible: _bottomLoading,
             )
           ]),
         ),
@@ -229,25 +241,12 @@ class PaginationViewState<T> extends State<PaginationView<T>> {
   }
 
   Future<void> refresh() async {
-    setState(() {
-      _currentResponse = null;
-    });
-
-    final response = await widget.pageFetch(1);
-    setState(() {
-      _currentResponse = response;
-    });
-
-    if (response is Ok<Paginator<T>>) {
-      _nextPage = 2;
-
+    if (!_initialized) {
       setState(() {
-        _items = response.payload.results;
+        _currentResponse = null;
       });
     }
 
-    if (_scrollController.hasClients) {
-      _scrollController.jumpTo(0);
-    }
+    _fetchPage(1, true);
   }
 }

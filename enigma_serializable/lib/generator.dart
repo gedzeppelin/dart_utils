@@ -1,7 +1,5 @@
 import "dart:async";
 
-import "package:analyzer/dart/element/element.dart";
-import "package:build/build.dart";
 import "package:enigma_annotation/enigma_annotation.dart";
 import "package:source_gen/source_gen.dart";
 
@@ -9,11 +7,7 @@ import "util.dart";
 
 class PaginationGenerator extends GeneratorForAnnotation<JsonPagination> {
   @override
-  FutureOr<String> generateForAnnotatedElement(
-    Element element,
-    ConstantReader annotation,
-    BuildStep buildStep,
-  ) {
+  FutureOr<String> generateForAnnotatedElement(element, annotation, buildStep) {
     final styles = annotation.read("styles").listValue.map(
           (object) => PaginationStyle.values.firstWhere(
             (backend) {
@@ -23,6 +17,9 @@ class PaginationGenerator extends GeneratorForAnnotation<JsonPagination> {
           ),
         );
 
+    final fromJson = annotation.read("createFromJson").boolValue;
+    final toJson = annotation.read("createToJson").boolValue;
+
     final String? inputClass = element.name;
 
     if (inputClass == null) {
@@ -30,17 +27,12 @@ class PaginationGenerator extends GeneratorForAnnotation<JsonPagination> {
     }
 
     if (styles.length == 0) {
-      throw AssertionError("Must specify at least one backend");
+      throw AssertionError("At least one pagination style");
     } else if (styles.length == 1) {
-      final String paginatorClass = "${inputClass}Paginator";
-      return makePaginatorClass(styles.single, inputClass, paginatorClass);
+      return generatePaginator(styles.single, inputClass, fromJson, toJson);
     } else {
       return styles
-          .map((style) => makePaginatorClass(
-                style,
-                inputClass,
-                makePaginatorSuffix(style, inputClass),
-              ))
+          .map((s) => generatePaginator(s, inputClass, fromJson, toJson))
           .join("\n");
     }
   }

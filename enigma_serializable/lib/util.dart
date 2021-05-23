@@ -9,25 +9,33 @@ String makePaginatorSuffix(PaginationStyle style, String inputClass) {
     case PaginationStyle.nest:
       return "${inputClass}PaginatorNest";
     default:
-      throw Error();
+      throw AssertionError("Unrecognized pagination style");
   }
 }
 
-String makePaginatorClass(
-    PaginationStyle style, String inputClass, String paginatorClass) {
+String generatePaginator(
+  PaginationStyle style,
+  String inputClass,
+  bool fromJson,
+  bool toJson,
+) {
   switch (style) {
     case PaginationStyle.enigmapi:
-      return makePaginatorEnigmapi(inputClass, paginatorClass);
+      return generateEnigmapi(inputClass, fromJson, toJson);
     case PaginationStyle.django:
-      return makePaginatorDjango(inputClass, paginatorClass);
+      return generateDjango(inputClass, fromJson, toJson);
     case PaginationStyle.nest:
-      return makePaginatorNest(inputClass, paginatorClass);
+      return generateNest(inputClass, fromJson, toJson);
     default:
-      throw Error();
+      throw AssertionError("Unrecognized pagination style");
   }
 }
 
-String makePaginatorDjango(String inputClass, String paginatorClass) => """
+String generateDjango(String inputClass, bool fromJson, bool toJson) {
+  String result = "";
+
+  if (fromJson) {
+    result += """
 Paginator<$inputClass> _\$Pg${inputClass}FromJson(Map<String, dynamic> json) {
   return Paginator<$inputClass>(
     json["count"] as int,
@@ -35,69 +43,34 @@ Paginator<$inputClass> _\$Pg${inputClass}FromJson(Map<String, dynamic> json) {
     json["previous"] as String?,
     (json["results"] as List)
         .map(
-          (item) => _\$${inputClass}FromJson(item as Map<String, dynamic>),
+          (item) => $inputClass.fromJson(item as Map<String, dynamic>),
         )
         .toList(),
   );
-}
+}    
+""";
+  }
 
+  if (toJson) {
+    result += """
 Map<String, dynamic> _\$Pg${inputClass}ToJson(Paginator<$inputClass> instance) {
   return <String, dynamic>{
     "count": instance.count,
     "next": instance.next,
     "previous": instance.previous,
-    "results": instance.results.map((e) => _\$${inputClass}ToJson).toList(),
+    "results": instance.results.map((e) => e.toJson()).toList(),
   }; 
 }
 """;
+  }
 
-String makePaginatorEnigmapi(String inputClass, String paginatorClass) => """
-TODO
+  return result;
+}
+
+String generateEnigmapi(String inputClass, bool fromJson, bool toJson) => """
+// TODO
 """;
 
-String makePaginatorNest(String inputClass, String paginatorClass) => """
-class $paginatorClass extends Paginated<$inputClass>  {
-  const $paginatorClass(
-    List<$inputClass> data,
-    this.count,
-    int total,
-    this.page,
-    this.pageCount,
-  ) : super(data, total);
-
-  final int count;
-  final int page;
-  final int pageCount;
-
-  @override
-  bool get haveNext => page < pageCount;
-  @override
-  bool get havePrevious => page > 1;
-
-  factory $paginatorClass.fromJson(Map<String, dynamic> json) {
-    return $paginatorClass(
-      (json["data"] as List)
-          ?.map(
-            (item) => item == null 
-                ? null 
-                : $inputClass.fromJson(item as Map<String, dynamic>),
-          )
-          ?.toList(),
-      json["count"] as int,
-      json["total"] as int,
-      json["page"] as int,
-      json["pageCount"] as int,
-    );
-  }
-  
-  Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      "data": this.results?.map((e) => e?.toJson())?.toList(),
-      "count": this.count,
-      "total": this.totalCount,
-      "page": this.page,
-      "pageCount": this.pageCount,
-    }; 
-  }
-}
+String generateNest(String inputClass, bool fromJson, bool toJson) => """
+// TODO
 """;

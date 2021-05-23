@@ -1,11 +1,10 @@
-import "dart:convert" show json, utf8;
-
 import 'package:dio/dio.dart';
 import 'package:enigma_annotation/enigma_annotation.dart';
 import "package:enigma_core/enigma_core.dart";
 import "package:dio/dio.dart" as dio;
 
 part "make_any.dart";
+part "make_multiple.dart";
 part "make_object.dart";
 part "make_paginator.dart";
 part "types.dart";
@@ -105,10 +104,13 @@ class Ok<T> extends Response<T> {
 // ANCHOR Err variants.
 
 class Err<T> extends Response<T> implements Exception {
+  final Exception? error;
+
   String? _error = null;
   List<ErrInfo>? _messages = null;
 
   Err({
+    this.error,
     dynamic payload,
     Uri? requestURL,
     int? status,
@@ -171,8 +173,6 @@ class Err<T> extends Response<T> implements Exception {
 
     return defaults.response.errorMessage();
   }
-
-  //Err<A> toType<A>();
 
   @override
   void notify([NotifyKind? kind, Notifier? notifier]) {

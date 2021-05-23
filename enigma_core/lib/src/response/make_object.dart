@@ -13,10 +13,8 @@ Future<Response<T>> _makeObject<T>(
     try {
       final dioResponse = await defaults.response.client.fetch(request);
 
-      if (dioResponse.isSuccessful) {
-        final stringBody = utf8.decode(dioResponse.data);
-        final body = json.decode(stringBody) as Map<String, dynamic>;
-        final payload = deserializer(body);
+      if (dioResponse.isSuccessful && dioResponse.data != null) {
+        final payload = deserializer(dioResponse.data as Map<String, dynamic>);
 
         return Ok(
           payload: payload,
@@ -26,26 +24,27 @@ Future<Response<T>> _makeObject<T>(
           message: message,
         );
       } else if (i + 1 == _attempts) {
-        final stringBody = utf8.decode(dioResponse.data);
-        final body = json.decode(stringBody);
-
         return Err(
-          payload: body,
+          payload: dioResponse.data,
           requestURL: dioResponse.realUri,
           status: dioResponse.statusCode,
           notifyKind: notify,
           message: message,
         );
       }
-    } catch (err) {
+    } on DioError catch (err) {
       if (i + 1 == _attempts) {
         return Err(
-          payload: err,
-          requestURL: request.uri,
+          error: err,
+          payload: err.response?.data,
+          requestURL: err.response?.realUri ?? request.uri,
+          status: err.response?.statusCode,
           notifyKind: notify,
           message: message,
         );
       }
+    } catch (err) {
+      continue;
     }
   }
 

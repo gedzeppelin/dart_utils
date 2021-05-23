@@ -13,37 +13,33 @@ Future<Response> _makeAny(
       final dioResponse = await defaults.response.client.fetch(request);
 
       if (dioResponse.isSuccessful) {
-        final stringBody = utf8.decode(dioResponse.data);
-        final body = json.decode(stringBody);
-
         return Ok(
-          payload: body,
+          payload: dioResponse.data,
           requestURL: dioResponse.realUri,
           status: dioResponse.statusCode,
           notifyKind: notify,
           message: message,
         );
       } else if (i + 1 == _attempts) {
-        final stringBody = utf8.decode(dioResponse.data);
-        final body = json.decode(stringBody);
-
         return Err(
-          payload: body,
+          payload: dioResponse.data,
           requestURL: dioResponse.realUri,
           status: dioResponse.statusCode,
           notifyKind: notify,
           message: message,
         );
       }
-    } catch (err) {
+    } on DioError catch (err) {
       if (i + 1 == _attempts) {
         return Err(
-          payload: err,
+          payload: err.response?.data,
           requestURL: request.uri,
           notifyKind: notify,
           message: message,
         );
       }
+    } catch (err) {
+      continue;
     }
   }
 
