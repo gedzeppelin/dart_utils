@@ -30,7 +30,7 @@ abstract class Response<T> {
   ]);
 
   factory Response.ok({
-    required T payload,
+    required T value,
     Uri? requestURL,
     int? status,
     String? message,
@@ -62,10 +62,10 @@ abstract class Response<T> {
 // ANCHOR Ok variant.
 
 class Ok<T> extends Response<T> {
-  final T payload;
+  final T value;
 
   Ok({
-    required this.payload,
+    required this.value,
     Uri? requestURL,
     int? status,
     String? message,
@@ -91,20 +91,20 @@ class Ok<T> extends Response<T> {
     IfOkFold<T>? ifOk,
     IfErrFold<T>? ifErr,
   }) =>
-      ifOk?.call(this);
+      ifOk?.call(this.value, this);
 
   @override
   A map<A>({
     required IfOkMap<T, A> ifOk,
     required IfErrMap<T, A> ifErr,
   }) =>
-      ifOk(this);
+      ifOk(this.value, this);
 }
 
 // ANCHOR Err variants.
 
 class Err<T> extends Response<T> implements Exception {
-  final Exception? error;
+  final Object? error;
 
   String? _error = null;
   List<ErrInfo>? _messages = null;
@@ -190,12 +190,12 @@ class Err<T> extends Response<T> implements Exception {
     IfOkFold<T>? ifOk,
     IfErrFold<T>? ifErr,
   }) =>
-      ifErr?.call(this);
+      ifErr?.call(this.error, this);
 
   @override
   A map<A>({
     required IfOkMap<T, A> ifOk,
     required IfErrMap<T, A> ifErr,
   }) =>
-      ifErr(this);
+      ifErr(this.error, this);
 }

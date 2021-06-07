@@ -20,7 +20,5 @@ class EgOptions {
 
   Notifier? notifier;
 
-  factory EgOptions() {
-    return defaults;
-  }
+  factory EgOptions() => defaults;
 }

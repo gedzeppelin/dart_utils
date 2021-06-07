@@ -2,11 +2,7 @@ import "package:enigma_core/enigma_core.dart";
 import "package:flutter/material.dart";
 import "package:flutter_spinkit/flutter_spinkit.dart";
 
-import "util.dart";
-
-class RefreshNotification extends Notification {
-  const RefreshNotification();
-}
+import 'types.dart';
 
 class FutureSection<T> extends StatefulWidget {
   FutureSection({
@@ -18,72 +14,54 @@ class FutureSection<T> extends StatefulWidget {
     this.loaderColor = Colors.blue,
     this.loaderPadding = const EdgeInsets.all(16.0),
     this.loaderSize = 25.0,
-    this.onResolve,
   }) : super(key: key);
 
-  final SuccessBuilder<T> builder;
-  final ErrorBuilder<T>? errorBuilder;
+  final OkBuilder<T> builder;
+  final ErrBuilder<T>? errorBuilder;
   final FutureCallback<T> futureCallback;
   final WidgetBuilder? loaderBuilder;
   final Color loaderColor;
   final EdgeInsets loaderPadding;
   final double loaderSize;
-  final OnResolve<T>? onResolve;
 
   @override
   FutureSectionState<T> createState() => FutureSectionState<T>();
 }
 
 class FutureSectionState<T> extends State<FutureSection<T>> {
-  late Future<Response<T>> _futureData;
+  late Future<Response<T>> _futureResponse;
 
   @override
   void initState() {
     super.initState();
     // Fetch the future data on initiation.
-    _futureData = widget.futureCallback();
-
-    // On resolve method.
-    final _onResolve = widget.onResolve;
-    if (_onResolve != null) {
-      _futureData.attachOnSuccess(_onResolve);
-    }
+    _futureResponse = widget.futureCallback();
   }
 
   Future<Response<T>> refresh() {
     setState(() {
-      _futureData = widget.futureCallback();
+      _futureResponse = widget.futureCallback();
     });
 
-    // On resolve method.
-    final _onResolve = widget.onResolve;
-    if (_onResolve != null) {
-      _futureData.attachOnSuccess(_onResolve);
-    }
-
-    return _futureData;
+    return _futureResponse;
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Response<T>>(
-      future: _futureData,
+      future: _futureResponse,
       builder: (BuildContext context, AsyncSnapshot<Response<T>> snapshot) {
         if (snapshot.hasData) {
           return snapshot.data!.map(
-            ifOk: (ok) => widget.builder(context, ok.payload),
-            ifErr: (err) {
-              final retryWidget = makeRetryWidget(refresh, err);
-              return widget.errorBuilder?.call(context, refresh, err) ??
-                  retryWidget;
-            },
+            ifOk: (value, ok) => widget.builder(context, value, ok),
+            ifErr: (e, err) =>
+                widget.errorBuilder?.call(context, err, refresh) ??
+                makeRetryWidget(refresh, err),
           );
         } else if (snapshot.hasError) {
           final err = Err<T>(payload: snapshot.error);
-          final retryWidget = makeRetryWidget(refresh, err);
-
-          return widget.errorBuilder?.call(context, refresh, err) ??
-              retryWidget;
+          return widget.errorBuilder?.call(context, err, refresh) ??
+              makeRetryWidget(refresh, err);
         }
 
         return widget.loaderBuilder?.call(context) ??

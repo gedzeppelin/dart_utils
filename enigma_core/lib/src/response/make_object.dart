@@ -14,10 +14,10 @@ Future<Response<T>> _makeObject<T>(
       final dioResponse = await defaults.response.client.fetch(request);
 
       if (dioResponse.isSuccessful && dioResponse.data != null) {
-        final payload = deserializer(dioResponse.data as Map<String, dynamic>);
+        final value = deserializer(dioResponse.data as Map<String, dynamic>);
 
         return Ok(
-          payload: payload,
+          value: value,
           requestURL: dioResponse.realUri,
           status: dioResponse.statusCode,
           notifyKind: notify,

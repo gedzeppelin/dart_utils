@@ -1,23 +1,17 @@
 import "package:enigma_core/enigma_core.dart";
+import "package:enigma_dart/src/widgets/futures/types.dart";
 import "package:flutter/material.dart";
 import "package:enigma_annotation/enigma_annotation.dart";
 
 import "package:enigma_dart/src/widgets/buttons/retry_button.dart";
+import "package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart";
 
-import "util.dart";
-
-typedef PaginatorCallback<T> = Future<Response<Paginator<T>>> Function(
-    int page);
-
-typedef ItemBuilder<T> = Function(BuildContext context, T item, int idx);
-typedef SeparatorBuilder = Widget Function(BuildContext context, int idx);
-typedef ErrorBuilder<T> = Widget Function(
-    Err<Paginator<T>> error, void Function() refresh);
+import "../pagination/util.dart";
 
 enum PaginationViewType { listView, gridView }
 
-class PaginationView<T> extends StatefulWidget {
-  const PaginationView({
+class PaginatorView<T> extends StatefulWidget {
+  const PaginatorView({
     Key? key,
     required this.itemBuilder,
     required this.pageFetch,
@@ -61,14 +55,14 @@ class PaginationView<T> extends StatefulWidget {
   final ScrollController? scrollController;
 
   @override
-  PaginationViewState<T> createState() => PaginationViewState<T>();
+  PaginatorViewState<T> createState() => PaginatorViewState<T>();
 
   final ItemBuilder<T> itemBuilder;
   final ErrorBuilder<T>? onError;
   final SeparatorBuilder? separatorBuilder;
 }
 
-class PaginationViewState<T> extends State<PaginationView<T>> {
+class PaginatorViewState<T> extends State<PaginatorView<T>> {
   late ScrollController _scrollController;
 
   List<T> _items = [];
@@ -90,7 +84,7 @@ class PaginationViewState<T> extends State<PaginationView<T>> {
     }
 
     if (widget.initialPayload != null) {
-      _currentResponse = Ok(payload: widget.initialPayload!);
+      _currentResponse = Ok(value: widget.initialPayload!);
       _items = widget.initialPayload!.results;
       _initialized = true;
     } else {
@@ -108,7 +102,7 @@ class PaginationViewState<T> extends State<PaginationView<T>> {
 
       if (response != null &&
           response is Ok<Paginator<T>> &&
-          response.payload.haveNext) {
+          response.value.haveNext) {
         setState(() {
           _bottomLoading = true;
         });
@@ -132,9 +126,8 @@ class PaginationViewState<T> extends State<PaginationView<T>> {
       _nextPage = page + 1;
 
       setState(() {
-        _items = reload
-            ? response.payload.results
-            : _items + response.payload.results;
+        _items =
+            reload ? response.value.results : _items + response.value.results;
         _bottomLoading = false;
       });
 
@@ -157,7 +150,7 @@ class PaginationViewState<T> extends State<PaginationView<T>> {
     }
 
     return _current.map(
-      ifOk: (payload) {
+      ifOk: (value, ok) {
         if (widget.paginationViewType == PaginationViewType.gridView) {
           if (widget.pullToRefresh) {
             return RefreshIndicator(
@@ -176,7 +169,7 @@ class PaginationViewState<T> extends State<PaginationView<T>> {
         }
         return _makeListView();
       },
-      ifErr: (err) =>
+      ifErr: (e, err) =>
           widget.onError?.call(err, refresh) ??
           RetryWidget(
             onTap: (startLoading, stopLoading) async {
@@ -209,34 +202,22 @@ class PaginationViewState<T> extends State<PaginationView<T>> {
   }
 
   Widget _makeGridView() {
-    final sliverBefore = widget.sliverBefore;
-    return CustomScrollView(
+    //TODO final sliverBefore = widget.sliverBefore;
+
+    return StaggeredGridView.countBuilder(
       controller: _scrollController,
       physics: widget.physics,
       reverse: widget.reverse,
       scrollDirection: widget.scrollDirection,
       shrinkWrap: widget.shrinkWrap,
-      slivers: [
-        if (sliverBefore != null) sliverBefore,
-        SliverPadding(
-          padding: widget.padding,
-          sliver: SliverGrid(
-            gridDelegate: widget.gridDelegate,
-            delegate: SliverChildBuilderDelegate(
-              (context, idx) => widget.itemBuilder(context, _items[idx], idx),
-              childCount: _items.length,
-            ),
-          ),
-        ),
-        SliverList(
-          delegate: SliverChildListDelegate([
-            Visibility(
-              child: widget.bottomLoader,
-              visible: _bottomLoading,
-            )
-          ]),
-        ),
-      ],
+      crossAxisCount: 4,
+      crossAxisSpacing: 8.0,
+      mainAxisSpacing: 8.0,
+      padding: widget.padding,
+      itemCount: _items.length,
+      itemBuilder: (context, index) =>
+          widget.itemBuilder(context, _items[index], index),
+      staggeredTileBuilder: (index) => StaggeredTile.fit(2),
     );
   }
 

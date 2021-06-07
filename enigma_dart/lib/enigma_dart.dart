@@ -17,10 +17,9 @@ export "src/widgets/carousels/horizontal_carousel.dart";
 
 export "src/widgets/dialogs/radio_dialog.dart";
 
-export "src/widgets/pagination/pagination_progress.dart";
+export 'src/widgets/futures/paginator_view.dart';
 export "src/widgets/pagination/util.dart";
 
-export "src/widgets/futures/future_page.dart";
 export "src/widgets/futures/future_section.dart";
 
 export "src/widgets/pickers/quantity_picker.dart";
